@@ -160,11 +160,19 @@ public:
 			R"(
 				layout(location = 0) in vec3 aPos;
 
-				layout(binding = 0) uniform UniformBufferObject {
+				struct n {
 					mat4 model;
-					mat4 view;
-					mat4 proj;
-				} ubo;
+				};
+
+				struct a {
+					vec3 m; // 0
+					n a; // 16
+					mat4 view; // 80
+					mat4 proj; // 144
+				};
+				layout(binding = 4, std140) uniform ubo{
+					a b;
+				};
 
 				void main() {
 				   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
