@@ -1,0 +1,646 @@
+#include <RoxEngine/renderer/UniformBuffer.h>
+
+namespace RoxEngine
+{
+	UniformBuffer::UniformBuffer(UboDesc desc)
+	{
+		mDesc = desc;
+		mData = malloc(desc.mSize);
+	}
+
+	UniformBuffer::~UniformBuffer()
+	{
+		if(mData)
+			free(mData);
+	}
+	#define UPLOAD_PRIMITIVE(out_type) out_type v = value; std::memcpy(mData + field.offset, value, sizeof(out_type)); 
+
+	bool UniformBuffer::Set(std::string name, bool value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+			case Type::Bool:   UPLOAD_PRIMITIVE(uint32_t) break;
+			case Type::SByte:  UPLOAD_PRIMITIVE(int8_t)   break;
+			case Type::UByte:  UPLOAD_PRIMITIVE(uint8_t)  break;
+			case Type::Short:  UPLOAD_PRIMITIVE(int16_t)  break;
+			case Type::UShort: UPLOAD_PRIMITIVE(uint16_t) break;
+			case Type::Int:    UPLOAD_PRIMITIVE(int32_t)  break;
+			case Type::UInt:   UPLOAD_PRIMITIVE(uint32_t) break;
+			case Type::Int64:  UPLOAD_PRIMITIVE(int64_t)  break;
+			case Type::UInt64: UPLOAD_PRIMITIVE(uint64_t) break;
+			case Type::Float:  UPLOAD_PRIMITIVE(float)    break;
+			case Type::Double: UPLOAD_PRIMITIVE(double)   break;
+		default:
+			break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, int8_t value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Bool:   UPLOAD_PRIMITIVE(uint32_t) break;
+		case Type::SByte:  UPLOAD_PRIMITIVE(int8_t)   break;
+		case Type::UByte:  UPLOAD_PRIMITIVE(uint8_t)  break;
+		case Type::Short:  UPLOAD_PRIMITIVE(int16_t)  break;
+		case Type::UShort: UPLOAD_PRIMITIVE(uint16_t) break;
+		case Type::Int:    UPLOAD_PRIMITIVE(int32_t)  break;
+		case Type::UInt:   UPLOAD_PRIMITIVE(uint32_t) break;
+		case Type::Int64:  UPLOAD_PRIMITIVE(int64_t)  break;
+		case Type::UInt64: UPLOAD_PRIMITIVE(uint64_t) break;
+		case Type::Float:  UPLOAD_PRIMITIVE(float)    break;
+		case Type::Double: UPLOAD_PRIMITIVE(double)   break;
+		default:
+			break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, uint8_t value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Bool:   UPLOAD_PRIMITIVE(uint32_t) break;
+		case Type::SByte:  UPLOAD_PRIMITIVE(int8_t)   break;
+		case Type::UByte:  UPLOAD_PRIMITIVE(uint8_t)  break;
+		case Type::Short:  UPLOAD_PRIMITIVE(int16_t)  break;
+		case Type::UShort: UPLOAD_PRIMITIVE(uint16_t) break;
+		case Type::Int:    UPLOAD_PRIMITIVE(int32_t)  break;
+		case Type::UInt:   UPLOAD_PRIMITIVE(uint32_t) break;
+		case Type::Int64:  UPLOAD_PRIMITIVE(int64_t)  break;
+		case Type::UInt64: UPLOAD_PRIMITIVE(uint64_t) break;
+		case Type::Float:  UPLOAD_PRIMITIVE(float)    break;
+		case Type::Double: UPLOAD_PRIMITIVE(double)   break;
+		default:
+			break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, int16_t value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Bool:   UPLOAD_PRIMITIVE(uint32_t) break;
+		case Type::SByte:  UPLOAD_PRIMITIVE(int8_t)   break;
+		case Type::UByte:  UPLOAD_PRIMITIVE(uint8_t)  break;
+		case Type::Short:  UPLOAD_PRIMITIVE(int16_t)  break;
+		case Type::UShort: UPLOAD_PRIMITIVE(uint16_t) break;
+		case Type::Int:    UPLOAD_PRIMITIVE(int32_t)  break;
+		case Type::UInt:   UPLOAD_PRIMITIVE(uint32_t) break;
+		case Type::Int64:  UPLOAD_PRIMITIVE(int64_t)  break;
+		case Type::UInt64: UPLOAD_PRIMITIVE(uint64_t) break;
+		case Type::Float:  UPLOAD_PRIMITIVE(float)    break;
+		case Type::Double: UPLOAD_PRIMITIVE(double)   break;
+		default:
+			break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, uint16_t value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Bool:   UPLOAD_PRIMITIVE(uint32_t) break;
+		case Type::SByte:  UPLOAD_PRIMITIVE(int8_t)   break;
+		case Type::UByte:  UPLOAD_PRIMITIVE(uint8_t)  break;
+		case Type::Short:  UPLOAD_PRIMITIVE(int16_t)  break;
+		case Type::UShort: UPLOAD_PRIMITIVE(uint16_t) break;
+		case Type::Int:    UPLOAD_PRIMITIVE(int32_t)  break;
+		case Type::UInt:   UPLOAD_PRIMITIVE(uint32_t) break;
+		case Type::Int64:  UPLOAD_PRIMITIVE(int64_t)  break;
+		case Type::UInt64: UPLOAD_PRIMITIVE(uint64_t) break;
+		case Type::Float:  UPLOAD_PRIMITIVE(float)    break;
+		case Type::Double: UPLOAD_PRIMITIVE(double)   break;
+		default:
+			break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, int32_t value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Bool:   UPLOAD_PRIMITIVE(uint32_t) break;
+		case Type::SByte:  UPLOAD_PRIMITIVE(int8_t)   break;
+		case Type::UByte:  UPLOAD_PRIMITIVE(uint8_t)  break;
+		case Type::Short:  UPLOAD_PRIMITIVE(int16_t)  break;
+		case Type::UShort: UPLOAD_PRIMITIVE(uint16_t) break;
+		case Type::Int:    UPLOAD_PRIMITIVE(int32_t)  break;
+		case Type::UInt:   UPLOAD_PRIMITIVE(uint32_t) break;
+		case Type::Int64:  UPLOAD_PRIMITIVE(int64_t)  break;
+		case Type::UInt64: UPLOAD_PRIMITIVE(uint64_t) break;
+		case Type::Float:  UPLOAD_PRIMITIVE(float)    break;
+		case Type::Double: UPLOAD_PRIMITIVE(double)   break;
+		default:
+			break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, uint32_t value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Bool:   UPLOAD_PRIMITIVE(uint32_t) break;
+		case Type::SByte:  UPLOAD_PRIMITIVE(int8_t)   break;
+		case Type::UByte:  UPLOAD_PRIMITIVE(uint8_t)  break;
+		case Type::Short:  UPLOAD_PRIMITIVE(int16_t)  break;
+		case Type::UShort: UPLOAD_PRIMITIVE(uint16_t) break;
+		case Type::Int:    UPLOAD_PRIMITIVE(int32_t)  break;
+		case Type::UInt:   UPLOAD_PRIMITIVE(uint32_t) break;
+		case Type::Int64:  UPLOAD_PRIMITIVE(int64_t)  break;
+		case Type::UInt64: UPLOAD_PRIMITIVE(uint64_t) break;
+		case Type::Float:  UPLOAD_PRIMITIVE(float)    break;
+		case Type::Double: UPLOAD_PRIMITIVE(double)   break;
+		default:
+			break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, int64_t value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Bool:   UPLOAD_PRIMITIVE(uint32_t) break;
+		case Type::SByte:  UPLOAD_PRIMITIVE(int8_t)   break;
+		case Type::UByte:  UPLOAD_PRIMITIVE(uint8_t)  break;
+		case Type::Short:  UPLOAD_PRIMITIVE(int16_t)  break;
+		case Type::UShort: UPLOAD_PRIMITIVE(uint16_t) break;
+		case Type::Int:    UPLOAD_PRIMITIVE(int32_t)  break;
+		case Type::UInt:   UPLOAD_PRIMITIVE(uint32_t) break;
+		case Type::Int64:  UPLOAD_PRIMITIVE(int64_t)  break;
+		case Type::UInt64: UPLOAD_PRIMITIVE(uint64_t) break;
+		case Type::Float:  UPLOAD_PRIMITIVE(float)    break;
+		case Type::Double: UPLOAD_PRIMITIVE(double)   break;
+		default:
+			break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, uint64_t value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Bool:   UPLOAD_PRIMITIVE(uint32_t) break;
+		case Type::SByte:  UPLOAD_PRIMITIVE(int8_t)   break;
+		case Type::UByte:  UPLOAD_PRIMITIVE(uint8_t)  break;
+		case Type::Short:  UPLOAD_PRIMITIVE(int16_t)  break;
+		case Type::UShort: UPLOAD_PRIMITIVE(uint16_t) break;
+		case Type::Int:    UPLOAD_PRIMITIVE(int32_t)  break;
+		case Type::UInt:   UPLOAD_PRIMITIVE(uint32_t) break;
+		case Type::Int64:  UPLOAD_PRIMITIVE(int64_t)  break;
+		case Type::UInt64: UPLOAD_PRIMITIVE(uint64_t) break;
+		case Type::Float:  UPLOAD_PRIMITIVE(float)    break;
+		case Type::Double: UPLOAD_PRIMITIVE(double)   break;
+		default:
+			break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, float value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Bool:   UPLOAD_PRIMITIVE(uint32_t) return true;
+		case Type::SByte:  UPLOAD_PRIMITIVE(int8_t)   return true;
+		case Type::UByte:  UPLOAD_PRIMITIVE(uint8_t)  return true;
+		case Type::Short:  UPLOAD_PRIMITIVE(int16_t)  return true;
+		case Type::UShort: UPLOAD_PRIMITIVE(uint16_t) return true;
+		case Type::Int:    UPLOAD_PRIMITIVE(int32_t)  return true;
+		case Type::UInt:   UPLOAD_PRIMITIVE(uint32_t) return true;
+		case Type::Int64:  UPLOAD_PRIMITIVE(int64_t)  return true;
+		case Type::UInt64: UPLOAD_PRIMITIVE(uint64_t) return true;
+		case Type::Float:  UPLOAD_PRIMITIVE(float)    return true;
+		case Type::Double: UPLOAD_PRIMITIVE(double)   return true;
+		default:
+			break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, double value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Bool:   UPLOAD_PRIMITIVE(uint32_t) return true;
+		case Type::SByte:  UPLOAD_PRIMITIVE(int8_t)   return true;
+		case Type::UByte:  UPLOAD_PRIMITIVE(uint8_t)  return true;
+		case Type::Short:  UPLOAD_PRIMITIVE(int16_t)  return true;
+		case Type::UShort: UPLOAD_PRIMITIVE(uint16_t) return true;
+		case Type::Int:    UPLOAD_PRIMITIVE(int32_t)  return true;
+		case Type::UInt:   UPLOAD_PRIMITIVE(uint32_t) return true;
+		case Type::Int64:  UPLOAD_PRIMITIVE(int64_t)  return true;
+		case Type::UInt64: UPLOAD_PRIMITIVE(uint64_t) return true;
+		case Type::Float:  UPLOAD_PRIMITIVE(float)    return true;
+		case Type::Double: UPLOAD_PRIMITIVE(double)   return true;
+		default:
+			break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, glm::mat2 value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+
+		switch (field.type)
+		{
+		case Type::Mat2: UPLOAD_PRIMITIVE(glm::mat2) return true;
+		case Type::Mat3: UPLOAD_PRIMITIVE(glm::mat3) return true;
+		case Type::Mat4: UPLOAD_PRIMITIVE(glm::mat4) return true;
+		default:
+			break;
+		}
+
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, glm::mat3 value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Mat2: UPLOAD_PRIMITIVE(glm::mat2) return true;
+		case Type::Mat3: UPLOAD_PRIMITIVE(glm::mat3) return true;
+		case Type::Mat4: UPLOAD_PRIMITIVE(glm::mat4) return true;
+		default:
+			break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, glm::mat4 value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Mat2: UPLOAD_PRIMITIVE(glm::mat2) return true;
+		case Type::Mat3: UPLOAD_PRIMITIVE(glm::mat3) return true;
+		case Type::Mat4: UPLOAD_PRIMITIVE(glm::mat4) return true;
+		default:
+			break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, glm::vec2 value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Vec2:  UPLOAD_PRIMITIVE(glm::vec2) return true;
+		case Type::Vec3:  UPLOAD_PRIMITIVE(glm::vec3) return true;
+		case Type::Vec4:  UPLOAD_PRIMITIVE(glm::vec4) return true;
+		case Type::iVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::iVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::iVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		case Type::uVec2: UPLOAD_PRIMITIVE(glm::uvec2) return true;
+		case Type::uVec3: UPLOAD_PRIMITIVE(glm::uvec3) return true;
+		case Type::uVec4: UPLOAD_PRIMITIVE(glm::uvec4) return true;
+		case Type::bVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::bVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::bVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		default: break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, glm::vec3 value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Vec2:  UPLOAD_PRIMITIVE(glm::vec2) return true;
+		case Type::Vec3:  UPLOAD_PRIMITIVE(glm::vec3) return true;
+		case Type::Vec4:  UPLOAD_PRIMITIVE(glm::vec4) return true;
+		case Type::iVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::iVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::iVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		case Type::uVec2: UPLOAD_PRIMITIVE(glm::uvec2) return true;
+		case Type::uVec3: UPLOAD_PRIMITIVE(glm::uvec3) return true;
+		case Type::uVec4: UPLOAD_PRIMITIVE(glm::uvec4) return true;
+		case Type::bVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::bVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::bVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		default: break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, glm::vec4 value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Vec2:  UPLOAD_PRIMITIVE(glm::vec2) return true;
+		case Type::Vec3:  UPLOAD_PRIMITIVE(glm::vec3) return true;
+		case Type::Vec4:  UPLOAD_PRIMITIVE(glm::vec4) return true;
+		case Type::iVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::iVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::iVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		case Type::uVec2: UPLOAD_PRIMITIVE(glm::uvec2) return true;
+		case Type::uVec3: UPLOAD_PRIMITIVE(glm::uvec3) return true;
+		case Type::uVec4: UPLOAD_PRIMITIVE(glm::uvec4) return true;
+		case Type::bVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::bVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::bVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		default: break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, glm::ivec2 value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Vec2:  UPLOAD_PRIMITIVE(glm::vec2) return true;
+		case Type::Vec3:  UPLOAD_PRIMITIVE(glm::vec3) return true;
+		case Type::Vec4:  UPLOAD_PRIMITIVE(glm::vec4) return true;
+		case Type::iVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::iVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::iVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		case Type::uVec2: UPLOAD_PRIMITIVE(glm::uvec2) return true;
+		case Type::uVec3: UPLOAD_PRIMITIVE(glm::uvec3) return true;
+		case Type::uVec4: UPLOAD_PRIMITIVE(glm::uvec4) return true;
+		case Type::bVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::bVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::bVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		default: break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, glm::ivec3 value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Vec2:  UPLOAD_PRIMITIVE(glm::vec2) return true;
+		case Type::Vec3:  UPLOAD_PRIMITIVE(glm::vec3) return true;
+		case Type::Vec4:  UPLOAD_PRIMITIVE(glm::vec4) return true;
+		case Type::iVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::iVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::iVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		case Type::uVec2: UPLOAD_PRIMITIVE(glm::uvec2) return true;
+		case Type::uVec3: UPLOAD_PRIMITIVE(glm::uvec3) return true;
+		case Type::uVec4: UPLOAD_PRIMITIVE(glm::uvec4) return true;
+		case Type::bVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::bVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::bVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		default: break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, glm::ivec4 value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Vec2:  UPLOAD_PRIMITIVE(glm::vec2) return true;
+		case Type::Vec3:  UPLOAD_PRIMITIVE(glm::vec3) return true;
+		case Type::Vec4:  UPLOAD_PRIMITIVE(glm::vec4) return true;
+		case Type::iVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::iVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::iVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		case Type::uVec2: UPLOAD_PRIMITIVE(glm::uvec2) return true;
+		case Type::uVec3: UPLOAD_PRIMITIVE(glm::uvec3) return true;
+		case Type::uVec4: UPLOAD_PRIMITIVE(glm::uvec4) return true;
+		case Type::bVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::bVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::bVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		default: break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, glm::uvec2 value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Vec2:  UPLOAD_PRIMITIVE(glm::vec2) return true;
+		case Type::Vec3:  UPLOAD_PRIMITIVE(glm::vec3) return true;
+		case Type::Vec4:  UPLOAD_PRIMITIVE(glm::vec4) return true;
+		case Type::iVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::iVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::iVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		case Type::uVec2: UPLOAD_PRIMITIVE(glm::uvec2) return true;
+		case Type::uVec3: UPLOAD_PRIMITIVE(glm::uvec3) return true;
+		case Type::uVec4: UPLOAD_PRIMITIVE(glm::uvec4) return true;
+		case Type::bVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::bVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::bVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		default: break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, glm::uvec3 value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Vec2:  UPLOAD_PRIMITIVE(glm::vec2) return true;
+		case Type::Vec3:  UPLOAD_PRIMITIVE(glm::vec3) return true;
+		case Type::Vec4:  UPLOAD_PRIMITIVE(glm::vec4) return true;
+		case Type::iVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::iVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::iVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		case Type::uVec2: UPLOAD_PRIMITIVE(glm::uvec2) return true;
+		case Type::uVec3: UPLOAD_PRIMITIVE(glm::uvec3) return true;
+		case Type::uVec4: UPLOAD_PRIMITIVE(glm::uvec4) return true;
+		case Type::bVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::bVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::bVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		default: break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, glm::uvec4 value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Vec2:  UPLOAD_PRIMITIVE(glm::vec2) return true;
+		case Type::Vec3:  UPLOAD_PRIMITIVE(glm::vec3) return true;
+		case Type::Vec4:  UPLOAD_PRIMITIVE(glm::vec4) return true;
+		case Type::iVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::iVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::iVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		case Type::uVec2: UPLOAD_PRIMITIVE(glm::uvec2) return true;
+		case Type::uVec3: UPLOAD_PRIMITIVE(glm::uvec3) return true;
+		case Type::uVec4: UPLOAD_PRIMITIVE(glm::uvec4) return true;
+		case Type::bVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::bVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::bVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		default: break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, glm::bvec2 value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Vec2:  UPLOAD_PRIMITIVE(glm::vec2) return true;
+		case Type::Vec3:  UPLOAD_PRIMITIVE(glm::vec3) return true;
+		case Type::Vec4:  UPLOAD_PRIMITIVE(glm::vec4) return true;
+		case Type::iVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::iVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::iVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		case Type::uVec2: UPLOAD_PRIMITIVE(glm::uvec2) return true;
+		case Type::uVec3: UPLOAD_PRIMITIVE(glm::uvec3) return true;
+		case Type::uVec4: UPLOAD_PRIMITIVE(glm::uvec4) return true;
+		case Type::bVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::bVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::bVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		default: break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, glm::bvec3 value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Vec2:  UPLOAD_PRIMITIVE(glm::vec2) return true;
+		case Type::Vec3:  UPLOAD_PRIMITIVE(glm::vec3) return true;
+		case Type::Vec4:  UPLOAD_PRIMITIVE(glm::vec4) return true;
+		case Type::iVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::iVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::iVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		case Type::uVec2: UPLOAD_PRIMITIVE(glm::uvec2) return true;
+		case Type::uVec3: UPLOAD_PRIMITIVE(glm::uvec3) return true;
+		case Type::uVec4: UPLOAD_PRIMITIVE(glm::uvec4) return true;
+		case Type::bVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::bVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::bVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		default: break;
+		}
+		return false;
+	}
+
+	bool UniformBuffer::Set(std::string name, glm::bvec4 value)
+	{
+		auto& it = mDesc.mFields[name];
+		if (it == mDesc.mFields.end())
+			return false;
+		auto& field = it.second;
+		switch (field.type)
+		{
+		case Type::Vec2:  UPLOAD_PRIMITIVE(glm::vec2) return true;
+		case Type::Vec3:  UPLOAD_PRIMITIVE(glm::vec3) return true;
+		case Type::Vec4:  UPLOAD_PRIMITIVE(glm::vec4) return true;
+		case Type::iVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::iVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::iVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		case Type::uVec2: UPLOAD_PRIMITIVE(glm::uvec2) return true;
+		case Type::uVec3: UPLOAD_PRIMITIVE(glm::uvec3) return true;
+		case Type::uVec4: UPLOAD_PRIMITIVE(glm::uvec4) return true;
+		case Type::bVec2: UPLOAD_PRIMITIVE(glm::ivec2) return true;
+		case Type::bVec3: UPLOAD_PRIMITIVE(glm::ivec3) return true;
+		case Type::bVec4: UPLOAD_PRIMITIVE(glm::ivec4) return true;
+		default: break;
+		}
+		return false;
+	}
+
+}

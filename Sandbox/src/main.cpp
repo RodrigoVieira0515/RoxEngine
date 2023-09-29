@@ -165,7 +165,7 @@ public:
 				};
 
 				struct a {
-					vec3 m; // 0
+					bvec3 m; // 0
 					n a; // 16
 					mat4 view; // 80
 					mat4 proj; // 144
