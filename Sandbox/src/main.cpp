@@ -201,7 +201,7 @@ public:
 		//cmd->EndWrite();
 		cmd->Execute();
 
-		((Vulkan::RendererApi*)RendererApi::Get().get())->mSrcFb = fb.get();
+		((Vulkan::RendererApi*)RendererApi::Get().get())->mSrcFb = fb;
 	}
 	void OnRender() {
 		// Draw Gui
@@ -243,6 +243,10 @@ public:
 #endif
 	}
 	void OnImGuiDraw() {
+#ifdef USE_IMGUI
+		ImGui::Begin("Hello World");
+		ImGui::End();
+#endif
 	}
 	void OnShutdown() {
 	}

@@ -73,7 +73,9 @@ namespace RoxEngine::Vulkan
 
 		vma::Allocator mAllocator;
 
-		RoxEngine::Framebuffer* mSrcFb = nullptr;
+		std::shared_ptr<RoxEngine::Framebuffer> mSrcFb = nullptr;
+
+		std::shared_ptr<CommandBuffer> cmd;
 	};
 }
 

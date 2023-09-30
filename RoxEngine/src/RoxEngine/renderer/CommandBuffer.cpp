@@ -15,6 +15,10 @@ namespace RoxEngine {
 		}
 		return nullptr;
 	}
+	void CommandBuffer::Reset()
+	{
+		mOperations.clear();
+	}
 	void CommandBuffer::BindRenderPass(std::shared_ptr<RenderPass>& renderPass, std::shared_ptr<Framebuffer>& framebuffer, glm::vec4 clearColor)
 	{
 		Operation op = { mOperations.size(), Operation::BIND_RENDER_PASS, Operation::opBindRp{renderPass, framebuffer, clearColor} };
@@ -48,6 +52,11 @@ namespace RoxEngine {
 	void CommandBuffer::InlineCmd(std::shared_ptr<CommandBuffer> cmd)
 	{
 		Operation op = { mOperations.size(), Operation::INLINE_CMD, Operation::opCICmd{cmd} };
+		mOperations.emplace_back(op);
+	}
+	void CommandBuffer::RawCall(std::function<void(CommandBuffer*, void*)> fn)
+	{
+		Operation op = { mOperations.size(), Operation::RAW_CALL, Operation::opRawCall{fn} };
 		mOperations.emplace_back(op);
 	}
 }

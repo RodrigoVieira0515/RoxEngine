@@ -26,6 +26,9 @@ namespace RoxEngine {
 				BLIT_FB,
 
 				DRAW,
+
+				// will just use a std::function pack you custom code into it
+				RAW_CALL
 			};
 			#pragma region OPERATIONS_DATA
 			struct opBindRp {
@@ -52,17 +55,21 @@ namespace RoxEngine {
 				std::shared_ptr<Framebuffer> src;
 				std::shared_ptr<Framebuffer> dst;
 			};
+			struct opRawCall {
+				std::function<void(RoxEngine::CommandBuffer*,void*)> fn;
+			};
 
 			#pragma endregion 
 			uint32_t index = 0; // index of the this operation
 			Type type = Type::NONE;
 			
-			std::variant<opBindRp, opBindGp, opBindVa, opDraw, opCICmd, opBlitFb> data;
+			std::variant<opBindRp, opBindGp, opBindVa, opDraw, opCICmd, opBlitFb, opRawCall> data;
 		};
 
 
 		static std::shared_ptr<CommandBuffer> Create();
-
+		//resets all operations
+		void Reset();
 		void BindRenderPass(std::shared_ptr<RenderPass>& renderPass, std::shared_ptr<Framebuffer>& framebuffer, glm::vec4 clearColor);
 		void BindGraphicsPipeline(std::shared_ptr<RoxEngine::GraphicsPipeline>& pipeline);
 		void BindVertexArray(std::shared_ptr<RoxEngine::VertexArray>& va);
@@ -70,6 +77,9 @@ namespace RoxEngine {
 		void BlitFramebuffers(std::shared_ptr<RoxEngine::Framebuffer> src, std::shared_ptr<RoxEngine::Framebuffer> dst);
 		void CallCmd(std::shared_ptr<CommandBuffer> cmd);
 		void InlineCmd(std::shared_ptr<CommandBuffer> cmd);
+		void RawCall(std::function<void(CommandBuffer*,void*)> fn);
+		// creates the raw objs without executing
+		virtual void CreateCache() = 0;
 		virtual void Execute() = 0;
 	protected:
 		std::vector<Operation> mOperations;
