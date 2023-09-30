@@ -183,20 +183,19 @@ public:
 			{});
 		static auto mat = Material::Create(shader);
 		auto ubo = mat->GetUbo("ubo");
-		bool ok = ubo->Set("yellow", 1);
 
 		static auto pipeline = GraphicsPipeline::Create(vb->GetLayout(),mat, fb);
+		bool ok = ubo->Set("yellow", 1);
 
 		cmd = CommandBuffer::Create();
 		
-		cmd->BeginWrite();
+		//cmd->BeginWrite();
 		cmd->BindRenderPass(renderPass, fb, glm::vec4(1,0.5,0.5,1));
 		cmd->BindGraphicsPipeline(pipeline);
 		cmd->BindVertexArray(va);
 		cmd->Draw(3);
-		cmd->EndWrite();
 		cmd->Execute();
-
+		//cmd->EndWrite();
 		
 	}
 	void OnRender() {
