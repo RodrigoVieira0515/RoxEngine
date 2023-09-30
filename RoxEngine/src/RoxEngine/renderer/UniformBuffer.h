@@ -1,12 +1,43 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <unordered_map>
+#include <string>
 
 namespace RoxEngine
 {
 	class UniformBuffer {
-	private:
-		friend class Vulkan::Shader;
+	public:
+		bool Set(std::string name, bool value);
+		bool Set(std::string name, int8_t value);
+		bool Set(std::string name, uint8_t value);
+		bool Set(std::string name, int16_t value);
+		bool Set(std::string name, uint16_t value);
+		bool Set(std::string name, int32_t value);
+		bool Set(std::string name, uint32_t value);
+		bool Set(std::string name, int64_t value);
+		bool Set(std::string name, uint64_t value);
+		bool Set(std::string name, float value);
+		bool Set(std::string name, double value);
+
+
+		bool Set(std::string name, glm::mat2 value);
+		bool Set(std::string name, glm::mat3 value);
+		bool Set(std::string name, glm::mat4 value);
+
+
+		bool Set(std::string name, glm::vec2 value);
+		bool Set(std::string name, glm::vec3 value);
+		bool Set(std::string name, glm::vec4 value);
+		bool Set(std::string name, glm::ivec2 value);
+		bool Set(std::string name, glm::ivec3 value);
+		bool Set(std::string name, glm::ivec4 value);
+		bool Set(std::string name, glm::uvec2 value);
+		bool Set(std::string name, glm::uvec3 value);
+		bool Set(std::string name, glm::uvec4 value);
+		bool Set(std::string name, glm::bvec2 value);
+		bool Set(std::string name, glm::bvec3 value);
+		bool Set(std::string name, glm::bvec4 value);
+
 		struct UboDesc {
 			enum class Type {
 				Bool,
@@ -46,6 +77,7 @@ namespace RoxEngine
 			};
 			size_t mSize;
 			uint32_t mBinding;
+			std::string name;
 			std::unordered_map<std::string, MemberDesc> mFields;
 		};
 
@@ -53,38 +85,8 @@ namespace RoxEngine
 		UniformBuffer(UboDesc desc);
 		virtual ~UniformBuffer();
 
-		bool Set(std::string name, bool value);
-		bool Set(std::string name, int8_t value);
-		bool Set(std::string name, uint8_t value);
-		bool Set(std::string name, int16_t value);
-		bool Set(std::string name, uint16_t value);
-		bool Set(std::string name, int32_t value);
-		bool Set(std::string name, uint32_t value);
-		bool Set(std::string name, int64_t value);
-		bool Set(std::string name, uint64_t value);
-		bool Set(std::string name, float value);
-		bool Set(std::string name, double value);
-
-
-		bool Set(std::string name, glm::mat2 value);
-		bool Set(std::string name, glm::mat3 value);
-		bool Set(std::string name, glm::mat4 value);
-
-
-		bool Set(std::string name, glm::vec2 value);
-		bool Set(std::string name, glm::vec3 value);
-		bool Set(std::string name, glm::vec4 value);
-		bool Set(std::string name, glm::ivec2 value);
-		bool Set(std::string name, glm::ivec3 value);
-		bool Set(std::string name, glm::ivec4 value);
-		bool Set(std::string name, glm::uvec2 value);
-		bool Set(std::string name, glm::uvec3 value);
-		bool Set(std::string name, glm::uvec4 value);
-		bool Set(std::string name, glm::bvec2 value);
-		bool Set(std::string name, glm::bvec3 value);
-		bool Set(std::string name, glm::bvec4 value);
-
+		bool mChanged;
 		UboDesc mDesc;
-		void* mData;
+		uint8_t* mData;
 	};
 }

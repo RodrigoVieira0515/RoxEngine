@@ -88,22 +88,36 @@ namespace RoxEngine::Vulkan
 		auto vertexShader = compiler.CompileGlslToSpv(vertexSrc, shaderc_vertex_shader, "-", compiler_options);
 		auto fragmentShader = compiler.CompileGlslToSpv(fragmentSrc, shaderc_fragment_shader, "-", compiler_options);
 
+		if (vertexShader.GetCompilationStatus() != shaderc_compilation_status_success)
+		{
+			RE_CORE_FATAL("Vertex Shader failed to compile: {}", vertexShader.GetErrorMessage());
+		}
+		if (fragmentShader.GetCompilationStatus() != shaderc_compilation_status_success)
+		{
+			RE_CORE_FATAL("Vertex Shader failed to compile: {}", fragmentShader.GetErrorMessage());
+		}
+
 		std::vector<uint32_t> vertexSpirvBin(vertexShader.begin(), vertexShader.end());
 		std::vector<uint32_t> fragmentSpirvBin(fragmentShader.begin(), fragmentShader.end());
 
 		mStages.insert({ Shader::Type::VERTEX,  api->mDevice.createShaderModule(vk::ShaderModuleCreateInfo({}, vertexSpirvBin)) });
 		mStages.insert({ Shader::Type::FRAGMENT,api->mDevice.createShaderModule(vk::ShaderModuleCreateInfo({}, fragmentSpirvBin)) });
 		
-		spirv_cross::Compiler c(std::move(vertexSpirvBin));
+		GetReflection(vertexSpirvBin);
+		GetReflection(fragmentSpirvBin);
+	}
+	void Shader::GetReflection(std::vector<uint32_t>& spirv)
+	{
+		spirv_cross::Compiler c(std::move(spirv));
 		auto resources = c.get_shader_resources();
 
 		for (auto& ubo : resources.uniform_buffers)
 		{
-			UniformBuffer::UboDesc uboDesc;
 
-
-			uint32_t binding = c.get_decoration(ubo.id, spv::DecorationBinding);
 			auto& ubo_type = c.get_type(ubo.base_type_id);
+			UniformBuffer::UboDesc uboDesc;
+			uboDesc.mBinding = c.get_decoration(ubo.id, spv::DecorationBinding);
+			uboDesc.name = c.get_name(ubo_type.self);
 
 			struct member_desc {
 				spirv_cross::SPIRType type;
@@ -113,7 +127,7 @@ namespace RoxEngine::Vulkan
 			};
 
 			std::deque<member_desc> types;
-			types.push_back({ ubo_type,c.get_name(ubo_type.self)});
+			types.push_back({ ubo_type,c.get_name(ubo_type.self) });
 			uint32_t ubo_size = c.get_declared_struct_size(c.get_type(ubo.base_type_id));
 
 			uboDesc.mSize = ubo_size;
@@ -132,28 +146,34 @@ namespace RoxEngine::Vulkan
 					auto member_offset = type.parent_offset + c.get_member_decoration(it.self, i, spv::DecorationOffset);
 
 					if (member_type.basetype == spirv_cross::SPIRType::Struct)
-						types.push_back({ member_type, member_name, type.dir.size() != 0 ? (type.dir + "." + member_name) : member_name, member_offset});
-					
+						types.push_back({ member_type, member_name, type.dir.size() != 0 ? (type.dir + "." + member_name) : member_name, member_offset });
+
 					UniformBuffer::UboDesc::Type member_t;
 					switch (member_type.basetype)
 					{
-						case spirv_cross::SPIRType::Boolean: member_t = UniformBuffer::UboDesc::Type::Bool; break;
-						case spirv_cross::SPIRType::SByte:   member_t = UniformBuffer::UboDesc::Type::SByte;   break;
-						case spirv_cross::SPIRType::UByte:   member_t = UniformBuffer::UboDesc::Type::UByte;   break;
-						case spirv_cross::SPIRType::Short:   member_t = UniformBuffer::UboDesc::Type::Short;   break;
-						case spirv_cross::SPIRType::UShort:  member_t = UniformBuffer::UboDesc::Type::UShort;  break;
-						case spirv_cross::SPIRType::Int:     member_t = UniformBuffer::UboDesc::Type::Int;     break;
-						case spirv_cross::SPIRType::UInt:    member_t = UniformBuffer::UboDesc::Type::UInt;    break;
-						case spirv_cross::SPIRType::Int64:   member_t = UniformBuffer::UboDesc::Type::Int64;   break;
-						case spirv_cross::SPIRType::UInt64:  member_t = UniformBuffer::UboDesc::Type::UInt64;  break;
-						case spirv_cross::SPIRType::Float:   member_t = UniformBuffer::UboDesc::Type::Float;   break;
-						case spirv_cross::SPIRType::Double:  member_t = UniformBuffer::UboDesc::Type::Double;  break;
-						case spirv_cross::SPIRType::Struct:  member_t = UniformBuffer::UboDesc::Type::Struct;  break;
-						default: RE_CORE_INFO("Unsupported shader data type for reflection"); break;
+					case spirv_cross::SPIRType::Boolean: member_t = UniformBuffer::UboDesc::Type::Bool; break;
+					case spirv_cross::SPIRType::SByte:   member_t = UniformBuffer::UboDesc::Type::SByte;   break;
+					case spirv_cross::SPIRType::UByte:   member_t = UniformBuffer::UboDesc::Type::UByte;   break;
+					case spirv_cross::SPIRType::Short:   member_t = UniformBuffer::UboDesc::Type::Short;   break;
+					case spirv_cross::SPIRType::UShort:  member_t = UniformBuffer::UboDesc::Type::UShort;  break;
+					case spirv_cross::SPIRType::Int:     member_t = UniformBuffer::UboDesc::Type::Int;     break;
+					case spirv_cross::SPIRType::UInt:    member_t = UniformBuffer::UboDesc::Type::UInt;    break;
+					case spirv_cross::SPIRType::Int64:   member_t = UniformBuffer::UboDesc::Type::Int64;   break;
+					case spirv_cross::SPIRType::UInt64:  member_t = UniformBuffer::UboDesc::Type::UInt64;  break;
+					case spirv_cross::SPIRType::Float:   member_t = UniformBuffer::UboDesc::Type::Float;   break;
+					case spirv_cross::SPIRType::Double:  member_t = UniformBuffer::UboDesc::Type::Double;  break;
+					case spirv_cross::SPIRType::Struct:  member_t = UniformBuffer::UboDesc::Type::Struct;  break;
+					default: RE_CORE_INFO("Unsupported shader data type for reflection"); break;
 					}
-					uboDesc.mFields.insert({ type.dir.size() != 0 ? (type.dir + "." + member_name) : member_name,{member_offset,member_t}});
+					uboDesc.mFields.insert({ type.dir.size() != 0 ? (type.dir + "." + member_name) : member_name,{member_offset,member_t} });
 				}
 			}
+
+			mUbos.push_back(uboDesc);
 		}
+	}
+	uint32_t Shader::GetNumOfUbos()
+	{
+		return mUbos.size();
 	}
 }

@@ -4,6 +4,7 @@
 #include <Platform/Vulkan/VFramebuffer.h>
 #include <Platform/Vulkan/VGraphicsPipeline.h>
 #include <Platform/Vulkan/VBuffers.h>
+#include <Platform/Vulkan/VMaterial.h>
 
 namespace RoxEngine::Vulkan {
 	CommandBuffer::CommandBuffer()
@@ -30,8 +31,40 @@ namespace RoxEngine::Vulkan {
 	}
 	void CommandBuffer::BindGraphicsPipeline(std::shared_ptr<RoxEngine::GraphicsPipeline>& pipeline)
 	{
-		auto rawPipeline = ((GraphicsPipeline*)pipeline.get())->mPipeline;
-		mBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, rawPipeline);
+		mPipeline = pipeline;
+		auto vPipeline = ((GraphicsPipeline*)pipeline.get());
+		
+		mBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, vPipeline->mPipeline);
+		if (vPipeline->mMat->GetShader()->GetNumOfUbos() > 0)
+		{
+			auto api = (RendererApi*)RendererApi::Get().get();
+			auto mat = vPipeline->mMat;
+			auto vmat = (Material*)mat.get();
+			for (auto& ubo : vmat->mUbos) {
+				auto vubo = (UniformBuffer*)ubo.second.get();
+				if (vubo->mChanged) {
+					void* buffer_data;
+					vmaMapMemory(api->mAllocator, vubo->mAllocation, &buffer_data);
+
+					std::memcpy(buffer_data, vubo->mData, vubo->mDesc.mSize);
+
+					vmaUnmapMemory(api->mAllocator, vubo->mAllocation);
+				}
+			}
+			std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
+			for (auto& ubo : vmat->mUbos) {
+				auto vubo = (UniformBuffer*)ubo.second.get();
+				if (vubo->mChanged) {
+					auto bufferInfo = vk::DescriptorBufferInfo(vubo->mUbo, 0, vubo->mDesc.mSize);
+					writeDescriptorSets.push_back(vk::WriteDescriptorSet(vPipeline->mDescriptorSet, vubo->mDesc.mBinding, 0, vk::DescriptorType::eUniformBuffer, nullptr, bufferInfo));
+				}
+			}
+			if (writeDescriptorSets.size() > 0)
+				api->mDevice.updateDescriptorSets(writeDescriptorSets, nullptr);
+			api->mDevice.waitIdle();
+			mBuffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, vPipeline->mLayout, 0, vPipeline->mDescriptorSet, nullptr);
+		}
+		materials.push_back(vPipeline->mMat);
 	}
 
 	void CommandBuffer::BindVertexArray(std::shared_ptr<RoxEngine::VertexArray>& va)
@@ -62,6 +95,8 @@ namespace RoxEngine::Vulkan {
 	void CommandBuffer::Execute()
 	{
 		auto api = (RendererApi*)RendererApi::Get().get();
+
+		api->mDevice.waitIdle();
 		api->mExecuteCmd = this;
 		vk::SubmitInfo submit_info(nullptr, nullptr, mBuffer,nullptr);
 		api->mGraphicsQueue.submit(submit_info, nullptr);

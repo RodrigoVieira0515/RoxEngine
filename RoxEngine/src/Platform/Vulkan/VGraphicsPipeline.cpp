@@ -2,6 +2,8 @@
 #include <Platform/Vulkan/VShader.h>
 #include <Platform/Vulkan/VRendererApi.h>
 #include <Platform/Vulkan/VRenderPass.h>
+#include <Platform/Vulkan/VMaterial.h>
+#include <Platform/Vulkan/VUniformBuffer.h>
 #include <RoxEngine/core/Assert.h>
 
 namespace RoxEngine::Vulkan {
@@ -23,12 +25,49 @@ namespace RoxEngine::Vulkan {
 		RE_CORE_ASSERT(false, "Unknown ShaderDataType!");
 		return vk::Format::eUndefined;
 	}
-	GraphicsPipeline::GraphicsPipeline(const BufferLayout& layout,std::shared_ptr<Material> mat, std::shared_ptr<Framebuffer> fb)
+	GraphicsPipeline::GraphicsPipeline(const BufferLayout& layout,std::shared_ptr<RoxEngine::Material> mat, std::shared_ptr<Framebuffer> fb)
 	{
+		mMat = mat;
 		auto shader = (Shader*)mat->GetShader().get();
 		auto api = (RendererApi*)RendererApi::Get().get();
+		auto vmat = (Material*)mat.get();
 
 		vk::PipelineLayoutCreateInfo layoutCreateInfo({}, nullptr, nullptr);
+		if (shader->GetNumOfUbos() > 0)
+		{
+			std::vector<vk::DescriptorSetLayoutBinding> setLayoutBindings;
+			setLayoutBindings.reserve(shader->mUbos.size());
+
+
+			for (auto& uboDesc : shader->mUbos)
+			{
+				setLayoutBindings.push_back(vk::DescriptorSetLayoutBinding(uboDesc.mBinding, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eAll));
+			}
+			auto DescriptorSetLayoutCreateInfo = vk::DescriptorSetLayoutCreateInfo({}, setLayoutBindings);
+			mSetLayout = api->mDevice.createDescriptorSetLayout(DescriptorSetLayoutCreateInfo);
+			auto pool = vk::DescriptorPoolSize(vk::DescriptorType::eUniformBuffer, 1);
+			vk::DescriptorPoolCreateInfo poolInfo(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, 1, pool);
+
+			mDescriptorPool = api->mDevice.createDescriptorPool(poolInfo);
+			
+			vk::DescriptorSetAllocateInfo allocInfo(mDescriptorPool, mSetLayout);
+			mDescriptorSet = api->mDevice.allocateDescriptorSets(allocInfo).front();
+			
+			std::vector<vk::WriteDescriptorSet> writeDescriptorSets;
+
+			for (auto& uboDesc : shader->mUbos)
+			{
+				auto vUbo = (UniformBuffer*)vmat->mUbos[uboDesc.name].get();
+				auto bufferInfo = vk::DescriptorBufferInfo(vUbo->mUbo, 0, uboDesc.mSize);
+				writeDescriptorSets.push_back(vk::WriteDescriptorSet(mDescriptorSet, uboDesc.mBinding, 0, vk::DescriptorType::eUniformBuffer, nullptr, bufferInfo));
+			}
+
+			api->mDevice.updateDescriptorSets(writeDescriptorSets, nullptr);
+
+			layoutCreateInfo.pSetLayouts = &mSetLayout;
+			layoutCreateInfo.setLayoutCount = 1;
+		}
+
 		mLayout = api->mDevice.createPipelineLayout(layoutCreateInfo);
 		
 

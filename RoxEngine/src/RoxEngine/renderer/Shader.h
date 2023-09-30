@@ -16,6 +16,8 @@ namespace RoxEngine {
 			std::string value;
 		};
 
+		virtual uint32_t GetNumOfUbos() = 0;
+
 		static std::shared_ptr<Shader> Create(const std::string& filepath);
 		static std::shared_ptr<Shader> Create(const std::string& vertexSrc, const std::string& fragmentSrc, const std::vector<Option>& options);
 		virtual ~Shader() = default;
