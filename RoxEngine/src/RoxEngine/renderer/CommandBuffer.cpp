@@ -35,6 +35,11 @@ namespace RoxEngine {
 		Operation op = { mOperations.size(), Operation::DRAW, Operation::opDraw{count} };
 		mOperations.emplace_back(op);
 	}
+	void CommandBuffer::BlitFramebuffers(std::shared_ptr<RoxEngine::Framebuffer> src, std::shared_ptr<RoxEngine::Framebuffer> dst)
+	{
+		Operation op = { mOperations.size(), Operation::BLIT_FB, Operation::opBlitFb{src,dst} };
+		mOperations.emplace_back(op);
+	}
 	void CommandBuffer::CallCmd(std::shared_ptr<CommandBuffer> cmd)
 	{
 		Operation op = { mOperations.size(), Operation::CALL_CMD, Operation::opCICmd{cmd} };

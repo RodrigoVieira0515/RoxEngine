@@ -6,6 +6,9 @@
 #include <RoxEngine/renderer/GraphicsPipeline.h>
 #include <RoxEngine/renderer/Buffers.h>
 #include <RoxEngine/renderer/CommandBuffer.h>
+#include <RoxEngine/renderer/RendererApi.h>
+
+#include <Platform/vulkan/VRendererApi.h>
 
 #include <glslang/Public/ShaderLang.h>
 #include <glslang/Public/ResourceLimits.h>
@@ -129,6 +132,7 @@ class SandboxApp : public Application
 {
 public:
 	std::shared_ptr<CommandBuffer> cmd;
+	std::shared_ptr<CommandBuffer> cmd2;
 	std::shared_ptr<Framebuffer> fb;
 
 	SandboxApp() : Application(ApplicationSpec{ WindowDesc{"SandboxApp", 800,800}}) {
@@ -194,9 +198,10 @@ public:
 		cmd->BindGraphicsPipeline(pipeline);
 		cmd->BindVertexArray(va);
 		cmd->Draw(3);
-		cmd->Execute();
 		//cmd->EndWrite();
-		
+		cmd->Execute();
+
+		((Vulkan::RendererApi*)RendererApi::Get().get())->mSrcFb = fb.get();
 	}
 	void OnRender() {
 		// Draw Gui

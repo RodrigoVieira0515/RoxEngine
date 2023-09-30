@@ -148,8 +148,8 @@ namespace RoxEngine::Vulkan {
 			mQueueFamilyIndices = indices;
 			mPhysicalDevice = pdevice;
 		}
-		//vk::PhysicalDeviceProperties deviceProperties = mPhysicalDevice.getProperties();
-		//RE_CORE_INFO("Using {} device to initialize vulkan", deviceProperties.deviceName);
+		vk::PhysicalDeviceProperties deviceProperties = mPhysicalDevice.getProperties();
+		RE_CORE_INFO("Using {} device to initialize vulkan", deviceProperties.deviceName);
 	}
 	void RendererApi::createDevice()
 	{
@@ -278,11 +278,33 @@ namespace RoxEngine::Vulkan {
 		mRenderPass = mDevice.createRenderPass(renderPassInfo);
 
 		mSwapchainFramebuffers.resize(mSwapchainImageViews.size());
+		std::vector<vk::ImageMemoryBarrier> barriers;
+		barriers.reserve(mSwapchainFramebuffers.size());
 		for (size_t i = 0; i < mSwapchainFramebuffers.size(); i++) {
 			vk::FramebufferCreateInfo createInfo({}, mRenderPass, mSwapchainImageViews[i], mSwapchainExtent.width, mSwapchainExtent.height, 1);
 
-			mSwapchainFramebuffers[i] = mDevice.createFramebuffer(createInfo);
+			mSwapchainFramebuffers[i] = std::make_shared<Framebuffer>(mDevice.createFramebuffer(createInfo), mSwapchainImages[i], mSwapchainImageViews[i], mSwapchainExtent.width, mSwapchainExtent.height);
+			
+			vk::ImageMemoryBarrier barrier(
+				vk::AccessFlags(),
+				vk::AccessFlagBits::eColorAttachmentWrite,
+				vk::ImageLayout::eUndefined,
+				vk::ImageLayout::ePresentSrcKHR,
+				VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
+				mSwapchainImages[i],
+				vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1)
+			);
+			barriers.push_back(barrier);
 		}
+
+		vk::CommandBufferAllocateInfo cmdAllocInfo(mCommandPool, vk::CommandBufferLevel::ePrimary, 1);
+		auto cmd = mDevice.allocateCommandBuffers(cmdAllocInfo).front();
+		cmd.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
+		cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::DependencyFlags(), nullptr, nullptr, barriers);
+		cmd.end();
+		vk::SubmitInfo submit_info(nullptr, nullptr, cmd, nullptr);
+		mGraphicsQueue.submit(submit_info, nullptr);
+		mDevice.waitIdle();
 	}
 
 	const int FRAMES_IN_FLIGHT = 2;
@@ -323,7 +345,6 @@ namespace RoxEngine::Vulkan {
 		createSwapchain();
 		mGraphicsQueue = mDevice.getQueue(mQueueFamilyIndices.graphicsFamily.value(), 0);
 		mPresentQueue = mDevice.getQueue(mQueueFamilyIndices.presentFamily.value(), 0);
-		createFramebuffers();
 
 		vk::SemaphoreCreateInfo semaphoreInfo;
 		vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
@@ -335,6 +356,7 @@ namespace RoxEngine::Vulkan {
 		mCommandPool = mDevice.createCommandPool(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, mQueueFamilyIndices.graphicsFamily.value()));
 		mCommandBuffers = mDevice.allocateCommandBuffers(vk::CommandBufferAllocateInfo(mCommandPool, vk::CommandBufferLevel::ePrimary, mSwapchainImages.size()));
 
+		createFramebuffers();
 		{
 			VmaAllocator rawAlloc;
 			
@@ -354,6 +376,9 @@ namespace RoxEngine::Vulkan {
 
 			mAllocator = rawAlloc;
 		}
+		mDevice.waitForFences(inFlightFence, true, UINT64_MAX);
+		mDevice.resetFences(inFlightFence);
+		mImageIndex = mDevice.acquireNextImageKHR(mSwapchain, UINT64_MAX, imageAvailableSemaphore, nullptr).value;
 	}
 	RendererApi::~RendererApi()
 	{
@@ -361,93 +386,106 @@ namespace RoxEngine::Vulkan {
 	}
 	void RendererApi::SwapBuffers()
 	{
-		mDevice.waitForFences(inFlightFence, true, UINT64_MAX);
-		mDevice.resetFences(inFlightFence);
-		uint32_t imageIndex = mDevice.acquireNextImageKHR(mSwapchain, UINT64_MAX, imageAvailableSemaphore, nullptr).value;
-		auto& cmd = mCommandBuffers[imageIndex];
-		cmd.reset();
-		cmd.begin(vk::CommandBufferBeginInfo());
-		auto clearval = vk::ClearValue(vk::ClearColorValue(0.f, 1.f, 0.f, 1.0f));
-		vk::RenderPassBeginInfo info(mRenderPass, mSwapchainFramebuffers[imageIndex], vk::Rect2D(vk::Offset2D(0, 0), mSwapchainExtent), clearval);
-		cmd.beginRenderPass(info, vk::SubpassContents::eInline);
-#ifdef USE_IMGUI
-		ImDrawData* draw_data = ImGui::GetDrawData();
-		ImGui_ImplVulkan_RenderDrawData(draw_data, cmd);
-#endif
-		cmd.endRenderPass();
-		vk::SurfaceCapabilitiesKHR surfaceCapabilities = mPhysicalDevice.getSurfaceCapabilitiesKHR(mSurface);
-		if (mExecuteCmd)
+		auto& cmd = mCommandBuffers[mImageIndex];
+
+		// Record cmd
 		{
-			mExecuteCmd->Execute();
-			std::array<vk::Offset3D,2> offsets = { vk::Offset3D(0, 0, 0),vk::Offset3D(800, 800, 1) };
-			auto subresource = vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1);
-			vk::ImageBlit region(subresource, offsets, subresource, offsets);
-			auto raw_texture = std::dynamic_pointer_cast<RenderTexture>(mExecuteCmd->mFramebuffer->mColorAttachments[0])->mImage;
-			
-			auto subresourceRange = vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+			cmd.reset();
+			cmd.begin(vk::CommandBufferBeginInfo());
+			auto clearval = vk::ClearValue(vk::ClearColorValue(0.f, 1.f, 0.f, 1.0f));
+			vk::RenderPassBeginInfo info(mRenderPass, ((Framebuffer*)mSwapchainFramebuffers[mImageIndex].get())->mFramebuffer, vk::Rect2D(vk::Offset2D(0, 0), mSwapchainExtent), clearval);
+			//cmd.beginRenderPass(info, vk::SubpassContents::eInline);
+			//blit image
+			{
+				auto src = (Framebuffer*)mSrcFb;
+				auto dst = std::static_pointer_cast<Framebuffer>(GetFramebuffer());
 
-			vk::ImageMemoryBarrier attToSrc(
-				vk::AccessFlagBits::eColorAttachmentWrite,
-				vk::AccessFlagBits::eTransferRead,
-				vk::ImageLayout::eColorAttachmentOptimal,
-				vk::ImageLayout::eTransferSrcOptimal,
-				VK_QUEUE_FAMILY_IGNORED,
-				VK_QUEUE_FAMILY_IGNORED,
-				raw_texture,
-				subresourceRange
-			);
-			vk::ImageMemoryBarrier swapToDst(
-				vk::AccessFlagBits::eNone,
-				vk::AccessFlagBits::eTransferWrite,
-				vk::ImageLayout::eUndefined,
-				vk::ImageLayout::eTransferDstOptimal,
-				VK_QUEUE_FAMILY_IGNORED,
-				VK_QUEUE_FAMILY_IGNORED,
-				mSwapchainImages[imageIndex],
-				subresourceRange
-			);
-			
-			cmd.pipelineBarrier(vk::PipelineStageFlagBits::eAllCommands, vk::PipelineStageFlagBits::eTransfer, vk::DependencyFlags(), nullptr, nullptr, { attToSrc,swapToDst });
-			cmd.blitImage(raw_texture, vk::ImageLayout::eTransferSrcOptimal, mSwapchainImages[imageIndex], vk::ImageLayout::eTransferDstOptimal, region, vk::Filter::eNearest);
+				auto srcSize = src->GetSize();
+				auto dstSize = dst->GetSize();
 
-			vk::ImageMemoryBarrier memoryBarrier(
-				vk::AccessFlagBits::eTransferWrite,
-				vk::AccessFlagBits::eTransferWrite,
-				vk::ImageLayout::eTransferDstOptimal,
-				vk::ImageLayout::eTransferDstOptimal,
-				VK_QUEUE_FAMILY_IGNORED,
-				VK_QUEUE_FAMILY_IGNORED,
-				mSwapchainImages[imageIndex],
-				vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
-			cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer, vk::DependencyFlags(), nullptr, nullptr, memoryBarrier);
+				vk::ImageSubresourceLayers subresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1);
+				std::array<vk::Offset3D, 2> srcOffsets = { vk::Offset3D(0, 0, 0),vk::Offset3D(srcSize.x, srcSize.y, 1) };
+				std::array<vk::Offset3D, 2> dstOffsets = { vk::Offset3D(0, 0, 0),vk::Offset3D(dstSize.x, dstSize.y, 1) };
 
-			vk::ImageMemoryBarrier SrcToAtt(
-				vk::AccessFlagBits::eTransferRead,
-				vk::AccessFlagBits::eColorAttachmentWrite,
-				vk::ImageLayout::eTransferSrcOptimal,
-				vk::ImageLayout::eColorAttachmentOptimal,
-				VK_QUEUE_FAMILY_IGNORED,
-				VK_QUEUE_FAMILY_IGNORED,
-				raw_texture,
-				subresourceRange
-			);
-			vk::ImageMemoryBarrier DstToSwap(
-				vk::AccessFlagBits::eTransferWrite,
-				vk::AccessFlagBits::eNone,
-				vk::ImageLayout::eTransferDstOptimal,
-				vk::ImageLayout::ePresentSrcKHR,
-				VK_QUEUE_FAMILY_IGNORED,
-				VK_QUEUE_FAMILY_IGNORED,
-				mSwapchainImages[imageIndex],
-				subresourceRange
-			);
-			cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::DependencyFlags(), nullptr, nullptr, { SrcToAtt,DstToSwap });
+				vk::ImageBlit region(subresourceLayers, srcOffsets, subresourceLayers, dstOffsets);
+
+				auto subresourceRange = vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+
+				auto srcTex = src->mSwapchain ?
+					src->mImg
+					:
+					std::static_pointer_cast<RenderTexture>(src->mColorAttachments[0])->mImage;
+				auto dstTex = dst->mSwapchain ?
+					dst->mImg
+					:
+					std::static_pointer_cast<RenderTexture>(dst->mColorAttachments[0])->mImage;
+
+
+				// convert to transfer read/write
+				std::array<vk::ImageMemoryBarrier, 2> toCopy = {
+					vk::ImageMemoryBarrier(
+						vk::AccessFlagBits::eColorAttachmentWrite,
+						vk::AccessFlagBits::eTransferRead,
+						vk::ImageLayout::eColorAttachmentOptimal,
+						vk::ImageLayout::eTransferSrcOptimal,
+						VK_QUEUE_FAMILY_IGNORED,
+						VK_QUEUE_FAMILY_IGNORED,
+						srcTex,
+						subresourceRange
+					),
+					vk::ImageMemoryBarrier(
+						vk::AccessFlagBits::eNone,
+						vk::AccessFlagBits::eTransferWrite,
+						vk::ImageLayout::eUndefined,
+						vk::ImageLayout::eTransferDstOptimal,
+						VK_QUEUE_FAMILY_IGNORED,
+						VK_QUEUE_FAMILY_IGNORED,
+						dstTex,
+						subresourceRange
+					),
+				};
+				std::array<vk::ImageMemoryBarrier, 2> fromCopy = {
+				vk::ImageMemoryBarrier(
+					vk::AccessFlagBits::eTransferRead,
+					vk::AccessFlagBits::eColorAttachmentWrite,
+					vk::ImageLayout::eTransferSrcOptimal,
+					vk::ImageLayout::eColorAttachmentOptimal,
+					VK_QUEUE_FAMILY_IGNORED,
+					VK_QUEUE_FAMILY_IGNORED,
+					srcTex,
+					subresourceRange
+				),
+				vk::ImageMemoryBarrier(
+					vk::AccessFlagBits::eTransferWrite,
+					vk::AccessFlagBits::eNone,
+					vk::ImageLayout::eTransferDstOptimal,
+					vk::ImageLayout::ePresentSrcKHR,
+					VK_QUEUE_FAMILY_IGNORED,
+					VK_QUEUE_FAMILY_IGNORED,
+					dstTex,
+					subresourceRange
+				)
+				};
+
+				cmd.pipelineBarrier(vk::PipelineStageFlagBits::eAllCommands, vk::PipelineStageFlagBits::eTransfer, vk::DependencyFlags(), nullptr, nullptr, toCopy);
+				cmd.blitImage(srcTex, vk::ImageLayout::eTransferSrcOptimal, dstTex, vk::ImageLayout::eTransferDstOptimal, region, vk::Filter::eNearest);
+				cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::DependencyFlags(), nullptr, nullptr, fromCopy);
+			}
+
+#ifdef USE_IMGUI
+			ImDrawData* draw_data = ImGui::GetDrawData();
+			ImGui_ImplVulkan_RenderDrawData(draw_data, cmd);
+#endif
+			//cmd.endRenderPass();
+			vk::SurfaceCapabilitiesKHR surfaceCapabilities = mPhysicalDevice.getSurfaceCapabilitiesKHR(mSurface);
+			cmd.end();
 		}
-		cmd.end();
+
 		vk::PipelineStageFlags waitDstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-		vk::SubmitInfo submit_info(imageAvailableSemaphore, waitDstStageMask, mCommandBuffers[imageIndex], renderFinishedSemaphore);
+		vk::SubmitInfo submit_info(imageAvailableSemaphore, waitDstStageMask, mCommandBuffers[mImageIndex], renderFinishedSemaphore);
 		mDevice.waitIdle();
 		mGraphicsQueue.submit(submit_info, inFlightFence);
+
 #ifdef USE_IMGUI
 		auto& io = ImGui::GetIO();
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -458,8 +496,16 @@ namespace RoxEngine::Vulkan {
 #endif
 
 		vk::Result res;
-		vk::PresentInfoKHR presentInfo(renderFinishedSemaphore, mSwapchain, imageIndex, res);
+		vk::PresentInfoKHR presentInfo(renderFinishedSemaphore, mSwapchain, mImageIndex, res);
 		mDevice.waitIdle();
 		res = mPresentQueue.presentKHR(presentInfo);
+
+		mDevice.waitForFences(inFlightFence, true, UINT64_MAX);
+		mDevice.resetFences(inFlightFence);
+		mImageIndex = mDevice.acquireNextImageKHR(mSwapchain, UINT64_MAX, imageAvailableSemaphore, nullptr).value;
+	}
+	std::shared_ptr<RoxEngine::Framebuffer> RendererApi::GetFramebuffer()
+	{
+		return mSwapchainFramebuffers.at(mImageIndex);
 	}
 }

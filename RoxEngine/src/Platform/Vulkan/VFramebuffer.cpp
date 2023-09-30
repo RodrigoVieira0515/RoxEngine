@@ -5,8 +5,17 @@
 
 namespace RoxEngine::Vulkan 
 {
+	Framebuffer::Framebuffer(vk::Framebuffer framebuffer, vk::Image img, vk::ImageView imgview, uint32_t width, uint32_t height)
+	{
+		mSwapchain = true;
+		mFramebuffer = framebuffer;
+		mSize = { width,height };
+		mImg = img;
+		mColorAttachmentViews.push_back(imgview);
+	}
 	Framebuffer::Framebuffer(uint32_t width, uint32_t height, std::vector<FramebufferTexFormat> attachments, std::shared_ptr<RoxEngine::RenderPass> renderpass)
 	{
+		mSwapchain = false;
 		mSize = { width,height };
 		mRenderPass = renderpass;
 		auto api = (RendererApi*)(RendererApi::Get().get());

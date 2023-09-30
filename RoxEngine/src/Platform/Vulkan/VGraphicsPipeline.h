@@ -6,7 +6,7 @@ namespace RoxEngine::Vulkan
 	class GraphicsPipeline : public RoxEngine::GraphicsPipeline
 	{
 	public:
-		GraphicsPipeline(const BufferLayout& layout,std::shared_ptr<RoxEngine::Material> mat, std::shared_ptr<Framebuffer> fb);
+		GraphicsPipeline(const BufferLayout& layout,std::shared_ptr<RoxEngine::Material> mat, std::shared_ptr<RoxEngine::Framebuffer> fb);
 
 		std::shared_ptr<RoxEngine::Material> mMat;
 		vk::Pipeline mPipeline;

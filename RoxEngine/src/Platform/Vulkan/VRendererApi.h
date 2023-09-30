@@ -27,11 +27,16 @@ namespace RoxEngine::Vulkan
 		void createDevice();
 		void createSwapchain();
 		void createFramebuffers();
+
 	public:
 		RendererApi(Window* window);
 		~RendererApi();
 
 		void SwapBuffers() override;
+
+		std::shared_ptr<RoxEngine::Framebuffer> GetFramebuffer();
+		
+		uint32_t mImageIndex = 0;
 
 		Window* mWindow;
 
@@ -50,8 +55,11 @@ namespace RoxEngine::Vulkan
 		vk::SwapchainKHR mSwapchain;
 		vk::Format mSwapchainFormat;
 		vk::Extent2D mSwapchainExtent;
+
 		std::vector<vk::Image> mSwapchainImages;
 		std::vector<vk::ImageView> mSwapchainImageViews;
+		std::vector<std::shared_ptr<RoxEngine::Framebuffer>> mSwapchainFramebuffers;
+
 
 		vk::Semaphore imageAvailableSemaphore;
 		vk::Semaphore renderFinishedSemaphore;
@@ -59,14 +67,13 @@ namespace RoxEngine::Vulkan
 
 		vk::RenderPass mRenderPass;
 
-		std::vector<vk::Framebuffer> mSwapchainFramebuffers;
 
 		vk::CommandPool mCommandPool;
 		std::vector<vk::CommandBuffer> mCommandBuffers;
 
 		vma::Allocator mAllocator;
 
-		CommandBuffer* mExecuteCmd = nullptr;
+		RoxEngine::Framebuffer* mSrcFb = nullptr;
 	};
 }
 

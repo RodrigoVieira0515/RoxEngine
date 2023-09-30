@@ -23,6 +23,8 @@ namespace RoxEngine {
 				CALL_CMD,
 				INLINE_CMD,
 
+				BLIT_FB,
+
 				DRAW,
 			};
 			#pragma region OPERATIONS_DATA
@@ -46,12 +48,16 @@ namespace RoxEngine {
 			struct opCICmd {
 				std::shared_ptr<CommandBuffer> cmd;
 			};
+			struct opBlitFb {
+				std::shared_ptr<Framebuffer> src;
+				std::shared_ptr<Framebuffer> dst;
+			};
 
 			#pragma endregion 
 			uint32_t index = 0; // index of the this operation
 			Type type = Type::NONE;
 			
-			std::variant<opBindRp, opBindGp, opBindVa, opDraw, opCICmd> data;
+			std::variant<opBindRp, opBindGp, opBindVa, opDraw, opCICmd, opBlitFb> data;
 		};
 
 
@@ -61,6 +67,7 @@ namespace RoxEngine {
 		void BindGraphicsPipeline(std::shared_ptr<RoxEngine::GraphicsPipeline>& pipeline);
 		void BindVertexArray(std::shared_ptr<RoxEngine::VertexArray>& va);
 		void Draw(uint32_t count);
+		void BlitFramebuffers(std::shared_ptr<RoxEngine::Framebuffer> src, std::shared_ptr<RoxEngine::Framebuffer> dst);
 		void CallCmd(std::shared_ptr<CommandBuffer> cmd);
 		void InlineCmd(std::shared_ptr<CommandBuffer> cmd);
 		virtual void Execute() = 0;

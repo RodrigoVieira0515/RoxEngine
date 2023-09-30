@@ -4,6 +4,7 @@
 #include <Platform/Vulkan/VRenderPass.h>
 #include <Platform/Vulkan/VMaterial.h>
 #include <Platform/Vulkan/VUniformBuffer.h>
+#include <Platform/Vulkan/VFramebuffer.h>
 #include <RoxEngine/core/Assert.h>
 
 namespace RoxEngine::Vulkan {
@@ -25,7 +26,7 @@ namespace RoxEngine::Vulkan {
 		RE_CORE_ASSERT(false, "Unknown ShaderDataType!");
 		return vk::Format::eUndefined;
 	}
-	GraphicsPipeline::GraphicsPipeline(const BufferLayout& layout,std::shared_ptr<RoxEngine::Material> mat, std::shared_ptr<Framebuffer> fb)
+	GraphicsPipeline::GraphicsPipeline(const BufferLayout& layout,std::shared_ptr<RoxEngine::Material> mat, std::shared_ptr<RoxEngine::Framebuffer> fb)
 	{
 		mMat = mat;
 		auto shader = (Shader*)mat->GetShader().get();

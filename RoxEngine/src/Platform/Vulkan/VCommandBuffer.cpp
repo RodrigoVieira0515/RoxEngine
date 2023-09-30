@@ -5,6 +5,7 @@
 #include <Platform/Vulkan/VGraphicsPipeline.h>
 #include <Platform/Vulkan/VBuffers.h>
 #include <Platform/Vulkan/VMaterial.h>
+#include <Platform/Vulkan/VRenderTexture.h>
 
 namespace RoxEngine::Vulkan {
 	CommandBuffer::CommandBuffer()
@@ -18,7 +19,7 @@ namespace RoxEngine::Vulkan {
 		vk::CommandBufferAllocateInfo info(api->mCommandPool, vk::CommandBufferLevel::ePrimary, 1);
 		mBuffer = api->mDevice.allocateCommandBuffers(info).front();
 		
-		vk::CommandBufferBeginInfo cmdBeginInfo(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
+		vk::CommandBufferBeginInfo cmdBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 		mBuffer.begin(cmdBeginInfo);
 
 		//b for currentlly bound
@@ -96,12 +97,6 @@ namespace RoxEngine::Vulkan {
 					bVertexArray = va;
 					break;
 				}
-				case Operation::CALL_CMD:
-					RE_CORE_ASSERT(false, "CommandBuffer Operation CallCmd not implemented")
-					break;
-				case Operation::INLINE_CMD:
-					RE_CORE_ASSERT(false, "CommandBuffer Operation InlineCmd not implemented")
-					break;
 				case Operation::DRAW: {
 					auto& data = std::get<Operation::opDraw>(op.data);
 
@@ -112,6 +107,91 @@ namespace RoxEngine::Vulkan {
 					mBuffer.drawIndexed(data.count, 1, 0, 0, 0);
 					break;
 				}
+				case Operation::BLIT_FB: {
+					auto& data = std::get<Operation::opBlitFb>(op.data);
+
+					auto src = std::static_pointer_cast<Framebuffer>(data.src);
+					auto dst = std::static_pointer_cast<Framebuffer>(data.dst);
+
+					auto srcSize = data.src->GetSize();
+					auto dstSize = data.dst->GetSize();
+
+					vk::ImageSubresourceLayers subresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1);
+					std::array<vk::Offset3D,2> srcOffsets = { vk::Offset3D(0, 0, 0),vk::Offset3D(srcSize.x, srcSize.y, 1) };
+					std::array<vk::Offset3D,2> dstOffsets = { vk::Offset3D(0, 0, 0),vk::Offset3D(dstSize.x, dstSize.y, 1) };
+
+					vk::ImageBlit region(subresourceLayers,srcOffsets, subresourceLayers, dstOffsets);
+
+					auto subresourceRange = vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+
+					auto srcTex = src->mSwapchain ? 
+						src->mImg
+						:
+						std::static_pointer_cast<RenderTexture>(src->mColorAttachments[0])->mImage;
+					auto dstTex = dst->mSwapchain ?
+						dst->mImg
+						: 
+						std::static_pointer_cast<RenderTexture>(dst->mColorAttachments[0])->mImage;
+
+
+					// convert to transfer read/write
+					std::array<vk::ImageMemoryBarrier, 2> toCopy = {
+						vk::ImageMemoryBarrier(
+							vk::AccessFlagBits::eColorAttachmentWrite,
+							vk::AccessFlagBits::eTransferRead,
+							vk::ImageLayout::eColorAttachmentOptimal,
+							vk::ImageLayout::eTransferSrcOptimal,
+							VK_QUEUE_FAMILY_IGNORED,
+							VK_QUEUE_FAMILY_IGNORED,
+							srcTex,
+							subresourceRange
+						),
+						vk::ImageMemoryBarrier(
+							vk::AccessFlagBits::eNone,
+							vk::AccessFlagBits::eTransferWrite,
+							vk::ImageLayout::eUndefined,
+							vk::ImageLayout::eTransferDstOptimal,
+							VK_QUEUE_FAMILY_IGNORED,
+							VK_QUEUE_FAMILY_IGNORED,
+							dstTex,
+							subresourceRange
+						),
+					};
+					std::array<vk::ImageMemoryBarrier, 2> fromCopy = {
+					vk::ImageMemoryBarrier(
+						vk::AccessFlagBits::eTransferRead,
+						vk::AccessFlagBits::eColorAttachmentWrite,
+						vk::ImageLayout::eTransferSrcOptimal,
+						vk::ImageLayout::eColorAttachmentOptimal,
+						VK_QUEUE_FAMILY_IGNORED,
+						VK_QUEUE_FAMILY_IGNORED,
+						srcTex,
+						subresourceRange
+					),
+					vk::ImageMemoryBarrier(
+						vk::AccessFlagBits::eTransferWrite,
+						vk::AccessFlagBits::eNone,
+						vk::ImageLayout::eTransferDstOptimal,
+						vk::ImageLayout::ePresentSrcKHR,
+						VK_QUEUE_FAMILY_IGNORED,
+						VK_QUEUE_FAMILY_IGNORED,
+						dstTex,
+						subresourceRange
+					)
+					};
+
+					mBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eAllCommands, vk::PipelineStageFlagBits::eTransfer, vk::DependencyFlags(), nullptr, nullptr, toCopy);
+					mBuffer.blitImage(srcTex, vk::ImageLayout::eTransferSrcOptimal, dstTex, vk::ImageLayout::eTransferDstOptimal, region, vk::Filter::eNearest);
+					mBuffer.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::DependencyFlags(), nullptr, nullptr, fromCopy);
+
+					break;
+				}
+				case Operation::CALL_CMD:
+					RE_CORE_ASSERT(false, "CommandBuffer Operation CallCmd not implemented")
+					break;
+				case Operation::INLINE_CMD:
+					RE_CORE_ASSERT(false, "CommandBuffer Operation InlineCmd not implemented")
+					break;
 			}
 		}
 		if (bFramebuffer != nullptr) {
@@ -121,6 +201,5 @@ namespace RoxEngine::Vulkan {
 
 		vk::SubmitInfo submit_info(nullptr, nullptr, mBuffer, nullptr);
 		api->mGraphicsQueue.submit(submit_info, nullptr);
-		api->mDevice.waitIdle();
 	}
 }

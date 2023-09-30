@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <RoxEngine/core/Window.h>
+#include <RoxEngine/renderer/Framebuffer.h>
 namespace RoxEngine {
 	class RendererApi
 	{
@@ -16,7 +17,7 @@ namespace RoxEngine {
 		static API GetApi();
 
 		virtual void SwapBuffers() = 0;
-
+		virtual std::shared_ptr<Framebuffer> GetFramebuffer() = 0;
 	};
 	const char* ApiToStr(RendererApi::API api);
 }
