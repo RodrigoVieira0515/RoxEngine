@@ -60,6 +60,49 @@ private:
 	std::unordered_map<std::string, Data> mData;
 };
 
+struct Vertex {
+	glm::vec3 position;
+	glm::vec2 uv = { 0,0 };
+	glm::vec3 normal = { 0,0,0};
+};
+
+class Mesh {
+public:
+	// Depending on the type some functions can't be called
+	enum Type {
+		STATIC,
+		DYNAMIC,
+	};
+
+	Mesh(Type type = Type::DYNAMIC, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices) : type(type) {
+		mVertices = vertices;
+		mIndices = indices;
+	}
+	
+	const std::vector<Vertex>& GetReadOnlyVertices() {
+		return mVertices;
+	}
+	const std::vector<uint32_t>& GetReadOnlyIndices() {
+		return mIndices;
+	}
+
+	std::vector<Vertex>& GetVertices() {
+		RE_CORE_ASSERT(type == Type::DYNAMIC, "Cannot get vertices of static mesh.");
+		return mVertices;
+	}
+	std::vector<uint32_t>& GetIndices() {
+		RE_CORE_ASSERT(type == Type::DYNAMIC, "Cannot get indices of static mesh.");
+		return mIndices;
+	}
+
+
+	Metadata metadata;
+	const Type type;
+private:
+	std::vector<Vertex> mVertices;
+	std::vector<uint32_t> mIndices;
+};
+
 class RendererPipeline1 : public RendererPipeline
 {
 public:
