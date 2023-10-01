@@ -29,7 +29,6 @@ namespace RoxEngine::Vulkan {
 		void Execute() override;
 
 		vk::CommandBuffer mPrimaryBuffer;
-
 		std::vector<std::shared_ptr<RoxEngine::Material>> materials;
 		std::shared_ptr<Framebuffer> mFramebuffer;
 		std::shared_ptr<RoxEngine::GraphicsPipeline> mPipeline;

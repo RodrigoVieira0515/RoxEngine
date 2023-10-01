@@ -2,8 +2,8 @@
 #include <RoxEngine/core/Logger.h>
 #include <RoxEngine/core/Assert.h>
 #include <RoxEngine/renderer/RendererApi.h>
-
 #include <RoxEngine/core/ImGuiLayer.h>
+#include <RoxEngine/renderer/Graphics.h>
 
 namespace RoxEngine {
 	Application::Application(const ApplicationSpec& spec)
@@ -17,8 +17,9 @@ namespace RoxEngine {
 
 	void Application::Run()
 	{
-		OnInit();
 		auto api = RendererApi::Get();
+		Graphics::Init();
+		OnInit();
 		while (mMainWindow->IsOpen())
 		{
 			mMainWindow->PollEvents();

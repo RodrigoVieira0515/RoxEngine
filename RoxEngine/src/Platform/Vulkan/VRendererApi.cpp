@@ -81,6 +81,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugMessageFunc(VkDebugUtilsMessageSeverityFlagB
 #include "VRenderTexture.h"
 #include "VFramebuffer.h"
 
+#include <RoxEngine/renderer/Graphics.h>
+
 namespace RoxEngine::Vulkan {
 	inline std::vector<const char*> GetLayers() {
 #ifndef VULKAN_DEBUG
@@ -307,7 +309,7 @@ namespace RoxEngine::Vulkan {
 		mDevice.waitIdle();
 	}
 
-	const int FRAMES_IN_FLIGHT = 2;
+	const int FRAMES_IN_FLIGHT = 3;
 
 	RendererApi::RendererApi(Window* window)
 	{
@@ -348,11 +350,18 @@ namespace RoxEngine::Vulkan {
 
 		vk::SemaphoreCreateInfo semaphoreInfo;
 		vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
+		
+		imageAvailableSemaphores.resize(FRAMES_IN_FLIGHT);
+		renderFinishedSemaphores.resize(FRAMES_IN_FLIGHT);
+		inFlightFences.resize(FRAMES_IN_FLIGHT);
+		cmds.resize(FRAMES_IN_FLIGHT);
 
-		imageAvailableSemaphore = mDevice.createSemaphore(semaphoreInfo);
-		renderFinishedSemaphore = mDevice.createSemaphore(semaphoreInfo);
-		inFlightFence = mDevice.createFence(fenceInfo);
-
+		for (int i = 0; i < FRAMES_IN_FLIGHT; i++)
+		{
+			imageAvailableSemaphores[i] = mDevice.createSemaphore(semaphoreInfo);
+			renderFinishedSemaphores[i] = mDevice.createSemaphore(semaphoreInfo);
+			inFlightFences[i] = mDevice.createFence(fenceInfo);
+		}
 		mCommandPool = mDevice.createCommandPool(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, mQueueFamilyIndices.graphicsFamily.value()));
 		mCommandBuffers = mDevice.allocateCommandBuffers(vk::CommandBufferAllocateInfo(mCommandPool, vk::CommandBufferLevel::ePrimary, mSwapchainImages.size()));
 
@@ -376,10 +385,7 @@ namespace RoxEngine::Vulkan {
 
 			mAllocator = rawAlloc;
 		}
-		mDevice.waitForFences(inFlightFence, true, UINT64_MAX);
-		mDevice.resetFences(inFlightFence);
-		mImageIndex = mDevice.acquireNextImageKHR(mSwapchain, UINT64_MAX, imageAvailableSemaphore, nullptr).value;
-
+		mRendererPipeline = nullptr;
 	}
 	RendererApi::~RendererApi()
 	{
@@ -387,15 +393,28 @@ namespace RoxEngine::Vulkan {
 	}
 	void RendererApi::SwapBuffers()
 	{
-		if(!cmd)
-			cmd = std::static_pointer_cast<CommandBuffer>(CommandBuffer::Create());
-		//auto& cmd = mCommandBuffers[mImageIndex];
+		if(!mRendererPipeline)
+			mRendererPipeline = Graphics::GetRendererPipeline();
+		
+		if (!cmds[0]) {
+			for (int i = 0; i < FRAMES_IN_FLIGHT; i++)
+			{
+				cmds[i] = std::static_pointer_cast<CommandBuffer>(CommandBuffer::Create());
+			}
+		}
+		
+		mDevice.waitForFences(inFlightFences[mCurrentFrame], true, UINT64_MAX);
+		mDevice.resetFences(inFlightFences[mCurrentFrame]);
+		mImageIndex = mDevice.acquireNextImageKHR(mSwapchain, UINT64_MAX, imageAvailableSemaphores[mCurrentFrame], nullptr).value;
 
+		auto& cmd = cmds[mCurrentFrame];
 		// Record cmd
+
 		{
 			cmd->Reset();
-			cmd->BlitFramebuffers(mSrcFb, GetFramebuffer());
-			
+			auto cmd2 = mRendererPipeline->GetCmd();
+			cmd->InlineCmd(cmd2);
+
 #ifdef USE_IMGUI
 			cmd->RawCall([&](RoxEngine::CommandBuffer* c, void* cm) -> void {
 				auto cmd = *((vk::CommandBuffer*)cm);
@@ -406,19 +425,13 @@ namespace RoxEngine::Vulkan {
 				ImGui_ImplVulkan_RenderDrawData(draw_data, cmd);
 				cmd.endRenderPass();
 			});
-			/*
-			ImDrawData* draw_data = ImGui::GetDrawData();
-			ImGui_ImplVulkan_RenderDrawData(draw_data, cmd);
-			*/
 #endif
-			vk::SurfaceCapabilitiesKHR surfaceCapabilities = mPhysicalDevice.getSurfaceCapabilitiesKHR(mSurface);
+			cmd->CreateCache();
 		}
 
-		cmd->CreateCache();
-		vk::PipelineStageFlags waitDstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-		vk::SubmitInfo submit_info(imageAvailableSemaphore, waitDstStageMask, cmd->mPrimaryBuffer, renderFinishedSemaphore);
-		mGraphicsQueue.submit(submit_info, inFlightFence);
-
+		vk::PipelineStageFlags waitDstStageMask = vk::PipelineStageFlagBits::eAllCommands;
+		vk::SubmitInfo submit_info(imageAvailableSemaphores[mCurrentFrame], waitDstStageMask, cmd->mPrimaryBuffer, renderFinishedSemaphores[mCurrentFrame]);
+		mGraphicsQueue.submit(submit_info, inFlightFences[mCurrentFrame]);
 #ifdef USE_IMGUI
 		auto& io = ImGui::GetIO();
 		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -429,13 +442,12 @@ namespace RoxEngine::Vulkan {
 #endif
 
 		vk::Result res;
-		vk::PresentInfoKHR presentInfo(renderFinishedSemaphore, mSwapchain, mImageIndex, res);
+		vk::PresentInfoKHR presentInfo(renderFinishedSemaphores[mCurrentFrame], mSwapchain, mImageIndex, res);
 		mDevice.waitIdle();
 		res = mPresentQueue.presentKHR(presentInfo);
 
-		mDevice.waitForFences(inFlightFence, true, UINT64_MAX);
-		mDevice.resetFences(inFlightFence);
-		mImageIndex = mDevice.acquireNextImageKHR(mSwapchain, UINT64_MAX, imageAvailableSemaphore, nullptr).value;
+		mImageIndex = (mImageIndex + 1) % mSwapchainImages.size();
+		mCurrentFrame = (mCurrentFrame + 1) % FRAMES_IN_FLIGHT;
 	}
 	std::shared_ptr<RoxEngine::Framebuffer> RendererApi::GetFramebuffer()
 	{

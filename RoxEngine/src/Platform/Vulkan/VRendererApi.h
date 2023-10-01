@@ -5,6 +5,7 @@
 #include <RoxEngine/core/Logger.h>
 #include <vma/vk_mem_alloc.h>
 #include <vma-hpp/vk_mem_alloc.hpp>
+#include <RoxEngine/renderer/RendererPipeline.h>
 
 #define VULKAN_DEBUG
 
@@ -37,6 +38,7 @@ namespace RoxEngine::Vulkan
 		std::shared_ptr<RoxEngine::Framebuffer> GetFramebuffer();
 		
 		uint32_t mImageIndex = 0;
+		uint32_t mCurrentFrame = 0;
 
 		Window* mWindow;
 
@@ -61,9 +63,9 @@ namespace RoxEngine::Vulkan
 		std::vector<std::shared_ptr<RoxEngine::Framebuffer>> mSwapchainFramebuffers;
 
 
-		vk::Semaphore imageAvailableSemaphore;
-		vk::Semaphore renderFinishedSemaphore;
-		vk::Fence inFlightFence;
+		std::vector<vk::Semaphore> imageAvailableSemaphores;
+		std::vector<vk::Semaphore> renderFinishedSemaphores;
+		std::vector<vk::Fence> inFlightFences;
 
 		vk::RenderPass mRenderPass;
 
@@ -73,9 +75,9 @@ namespace RoxEngine::Vulkan
 
 		vma::Allocator mAllocator;
 
-		std::shared_ptr<RoxEngine::Framebuffer> mSrcFb = nullptr;
+		std::vector<std::shared_ptr<CommandBuffer>> cmds;
 
-		std::shared_ptr<CommandBuffer> cmd;
+		RendererPipeline* mRendererPipeline;
 	};
 }
 

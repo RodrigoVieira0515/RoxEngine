@@ -11,7 +11,7 @@
 namespace RoxEngine::Vulkan {
 	CommandBuffer::CommandBuffer()
 	{
-		
+		mPrimaryBuffer = nullptr;
 	}
 
 	void CommandBuffer::ParseOperation(Operation& op, CurrentBound& currentBound)
@@ -182,7 +182,16 @@ namespace RoxEngine::Vulkan {
 
 	void CommandBuffer::CreateCache()
 	{
+		if (!mChanged)
+			return;
 		auto api = (RendererApi*)RendererApi::Get().get();
+
+		if (mPrimaryBuffer) {
+			mPrimaryBuffer.reset();
+		}
+
+		mChanged = false;
+
 		vk::CommandBufferAllocateInfo info(api->mCommandPool, vk::CommandBufferLevel::ePrimary, 1);
 		if (!mPrimaryBuffer) {
 			mPrimaryBuffer = api->mDevice.allocateCommandBuffers(info).front();
@@ -190,7 +199,7 @@ namespace RoxEngine::Vulkan {
 		else {
 			mPrimaryBuffer.reset();
 		}
-		vk::CommandBufferBeginInfo cmdBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+		vk::CommandBufferBeginInfo cmdBeginInfo;
 		mPrimaryBuffer.begin(cmdBeginInfo);
 
 		//b for currentlly bound

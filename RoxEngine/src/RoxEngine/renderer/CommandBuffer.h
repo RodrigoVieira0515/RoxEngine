@@ -79,9 +79,11 @@ namespace RoxEngine {
 		void InlineCmd(std::shared_ptr<CommandBuffer> cmd);
 		void RawCall(std::function<void(CommandBuffer*,void*)> fn);
 		// creates the raw objs without executing
+		bool HasChanged();
 		virtual void CreateCache() = 0;
 		virtual void Execute() = 0;
 	protected:
+		bool mChanged = false;
 		std::vector<Operation> mOperations;
 	};
 }
