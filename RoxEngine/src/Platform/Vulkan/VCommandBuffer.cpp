@@ -73,10 +73,20 @@ namespace RoxEngine::Vulkan {
 		case Operation::BIND_VERTEX_ARRAY: {
 			auto& data = std::get<Operation::opBindVa>(op.data);
 			auto va = std::dynamic_pointer_cast<VertexArray>(data.va);
-			for (auto& vb : va->GetVertexBuffers()) {
+			std::vector<vk::Buffer> vertexBuffers;
+			std::vector<vk::DeviceSize> offsets;
+
+			auto& vaVertexBuffers = va->GetVertexBuffers();
+
+			vertexBuffers.reserve(vaVertexBuffers.size());
+			offsets.reserve(vaVertexBuffers.size());
+			for (auto& vb : vaVertexBuffers) {
 				auto rawVb = ((VertexBuffer*)vb.get())->mBuffer;
-				mPrimaryBuffer.bindVertexBuffers(0, rawVb, { 0 });
+
+				vertexBuffers.push_back(rawVb);
+				offsets.push_back(0);
 			}
+			mPrimaryBuffer.bindVertexBuffers(0, vertexBuffers, offsets);
 			auto rawIb = ((IndexBuffer*)va->GetIndexBuffer().get())->mBuffer;
 			mPrimaryBuffer.bindIndexBuffer(rawIb, 0, vk::IndexType::eUint32);
 
@@ -176,6 +186,13 @@ namespace RoxEngine::Vulkan {
 			std::get<Operation::opRawCall>(op.data).fn(this, &mPrimaryBuffer);
 			break;
 		}
+		case Operation::UNBIND_RENDER_PASS:
+			mPrimaryBuffer.endRenderPass();
+			break;
+		// DO NOT EXIST IN VULKAN
+		case Operation::UNBIND_GRAPHICS_PIPELINE:
+		case Operation::UNBIND_VERTEX_ARRAY:
+			break;
 		default: RE_CORE_ASSERT(false, "");
 		}
 	}
@@ -249,7 +266,7 @@ namespace RoxEngine::Vulkan {
 			}
 		}
 		if (currentBound.bFramebuffer != nullptr) {
-			mPrimaryBuffer.endRenderPass();
+			//mPrimaryBuffer.endRenderPass();
 		}
 		mPrimaryBuffer.end();
 	}

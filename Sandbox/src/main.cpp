@@ -15,185 +15,68 @@
 #include <glm/gtx/string_cast.hpp>
 using namespace RoxEngine;
 
-// Meant for dynamic metadata not static, like information on a mesh from a custom renderer pipeline
-class Metadata {
-public:
-	~Metadata() {
-		for (auto& [key, data] : mData)
-		{
-			data.mDelete(data.ptr);
-		}
-	}
-
-	template<typename T>
-	void Add(T&& val) {
-		RE_CORE_ASSERT(!Has<T>(), "Adding metadata that already exists");
-		mData.insert({typeid(T).name(),{new T(val), [](void* raw_value) {T* value = (T*)raw_value; delete raw_value; }}});
-	}
-	template<typename T>
-	void AddOrReplace(T&& val) {
-		if (Has<T>())
-			Remove<T>();
-		Add<T>(std::move(val));
-	}
-	template<typename T>
-	bool Has() {
-		return mData.find(typeid(T).name()) != mData.end();
-	}
-	template<typename T>
-	T* Get() {
-		RE_CORE_ASSERT(Has<T>(), "Getting metadata that doesn't exist");
-		return (T*)mData.at(typeid(T).name()).ptr;
-	}
-
-	template<typename T>
-	void Remove() {
-		RE_CORE_ASSERT(Has<T>(), "Removing metadata that doesn't exist");
-		delete Get<T>();
-		mData.erase(typeid(T).name());
-	}
-
-private:
-	struct Data {
-		void* ptr;
-		std::function<void(void*)> mDelete;
-	};
-
-	std::unordered_map<std::string, Data> mData;
-};
-
-struct Vertex {
-	Vertex(glm::vec3 Position, glm::vec2 Uv = {0,0}, glm::vec3 Normal = { 0,0,0 }) {
-		position = Position;
-		uv = Uv;
-		normal = Normal;
-	}
-
-	glm::vec3 position;
-	glm::vec2 uv = { 0,0 };
-	glm::vec3 normal = { 0,0,0};
-};
-
-class Mesh {
-public:
-	// Depending on the type some functions can't be called
-	enum Type {
-		STATIC,
-		DYNAMIC,
-	};
-
-	Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices,Type type = Type::DYNAMIC) : type(type) {
-		mVertices = vertices;
-		mIndices = indices;
-	}
-	Mesh() : type(Type::DYNAMIC) {
-	}
-	
-	const std::vector<Vertex>& GetReadOnlyVertices() {
-		return mVertices;
-	}
-	const std::vector<uint32_t>& GetReadOnlyIndices() {
-		return mIndices;
-	}
-
-	std::vector<Vertex>& GetVertices() {
-		RE_CORE_ASSERT(type == Type::DYNAMIC, "Cannot get vertices of static mesh.");
-		return mVertices;
-	}
-	std::vector<uint32_t>& GetIndices() {
-		RE_CORE_ASSERT(type == Type::DYNAMIC, "Cannot get indices of static mesh.");
-		return mIndices;
-	}
-	// Returns the radius of the bounding box starting from the center
-	glm::vec3 FindBoundingBox()
-	{
-		auto threads_count = std::thread::hardware_concurrency();
-
-		std::function findboudbox_fn = [](std::vector<Vertex>& vertices, size_t startIndex, size_t endIndex, glm::vec3& data) {
-			data = { 0,0,0 };
-			for (int i = startIndex; i < endIndex; i++) {
-				if (vertices[i].position.x > data.x)
-					data.x = vertices[i].position.x;
-				if (vertices[i].position.y > data.y)
-					data.y = vertices[i].position.y;
-				if (vertices[i].position.z > data.z)
-					data.z = vertices[i].position.z;
-			}
-		};
-		
-		// this atleast gotta be larger than threads_count
-		if (mVertices.size() < 500 && mVertices.size() > threads_count) {
-			glm::vec3 data;
-			findboudbox_fn(mVertices, 0, mVertices.size(), data);
-			return data / 2.f;
-		}
-		std::vector<std::thread> threads;
-		std::vector<glm::vec3> threads_data;
-
-		
-
-		threads.reserve(threads_count);
-
-		const size_t partitionSize = mVertices.size() / threads_count;
-		size_t currentSize = 0;
-		
-
-		threads.reserve(threads_count);
-		threads_data.resize(threads_count);
-		for (int i = 0; i < threads_count; i++)
-		{
-			auto start_index = currentSize;
-			auto end_index = currentSize += partitionSize;
-			if ((i + 1) == threads_count && currentSize != mVertices.size()) {
-				end_index = mVertices.size();
-			}
-			threads.push_back(std::thread(findboudbox_fn, std::ref(mVertices), start_index, end_index, std::ref(threads_data.at(i))));
-		}
-		while (true) {
-			bool allThreadsJoinable = threads[0].joinable();
-			for (int i = 1; i < threads_count; i++)
-			{
-				allThreadsJoinable = allThreadsJoinable && threads[i].joinable();
-			}
-			if (allThreadsJoinable)
-				break;
-		}
-		glm::vec3 finalData = { 0,0,0 };
-		for (int i = 0; i < threads_count; i++)
-		{
-			threads[i].join();
-
-			if (threads_data[i].x > finalData.x)
-				finalData.x = threads_data[i].x;
-			if (threads_data[i].y > finalData.y)
-				finalData.y = threads_data[i].y;
-			if (threads_data[i].z > finalData.z)
-				finalData.z = threads_data[i].z;
-		}
-		return finalData / 2.f;
-	}
-
-
-	Metadata metadata;
-	const Type type;
-private:
-	std::vector<Vertex> mVertices;
-	std::vector<uint32_t> mIndices;
-};
-
 class RendererPipeline1 : public RendererPipeline
 {
 public:
 	std::shared_ptr<CommandBuffer> cmd;
+	std::shared_ptr<Material> Mat;
+	std::shared_ptr<Framebuffer> fb;
+	std::shared_ptr<GraphicsPipeline> pipeline;
+		 
+	std::shared_ptr<VertexArray> va;
+	BufferLayout bufferLayout;
+
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
+
+	bool updated;
 
 	RendererPipeline1() {
 		cmd = CommandBuffer::Create();
+		auto renderPass = RenderPass::Create({ {FramebufferTexFormat::RGB8, StoreLoadOp::CLEAR, StoreLoadOp::LOAD} }, { Subpass(0, std::vector<uint32_t>(), { 0 }, std::vector<uint32_t>()) });
+		fb = Framebuffer::Create(800, 800, { FramebufferTexFormat::RGB8 }, renderPass);
+		bufferLayout = { {"mPos", ShaderDataType::Float3},{"mUv", ShaderDataType::Float2},{"mNormal", ShaderDataType::Float3} };
 	}
 
-	void UploadMesh(std::shared_ptr<VertexArray> va) override {
+	void UploadMesh(const Mesh& m, std::shared_ptr<Material> mat) override {
+		if (!Mat) {
+			Mat = mat;
+			pipeline = GraphicsPipeline::Create(bufferLayout, Mat, fb);
+		}
 
+		auto& mvertices = m.GetReadOnlyVertices();
+		auto& mindices = m.GetReadOnlyIndices();
+
+		if (mvertices.size() == 0)
+			return;
+
+		vertices.insert(vertices.end(), mvertices.begin(), mvertices.end());
+		indices.insert(indices.end(), mindices.begin(), mindices.end());
+
+		updated = true;
 	}
 	std::shared_ptr<CommandBuffer> GetCmd() override {
+		if (updated) {
+			auto vb = VertexBuffer::Create(bufferLayout, vertices.data(), sizeof(Vertex) * vertices.size());
+			auto ib = IndexBuffer::Create(indices.data(), indices.size());
+
+			va = VertexArray::Create();
+			va->AddVertexBuffer(vb);
+			va->SetIndexBuffer(ib);
+			updated = false;
+		}
+		cmd->Reset();
+		if (va) {
+			cmd->BindRenderPass(fb->GetRenderPass(), fb, glm::vec4(1, 0.5, 0.5, 1));
+			cmd->BindGraphicsPipeline(pipeline);
+			cmd->BindVertexArray(va);
+			cmd->Draw(vertices.size());
+			cmd->UnbindVertexArray();
+			cmd->UnbindGraphicsPipeline();
+			cmd->UnbindRenderPass();
+		}
+		cmd->BlitFramebuffers(fb, RendererApi::Get()->GetFramebuffer());
+
 		return cmd;
 	}
 };
@@ -201,10 +84,6 @@ public:
 class SandboxApp : public Application
 {
 public:
-	std::shared_ptr<CommandBuffer> cmd;
-	std::shared_ptr<CommandBuffer> cmd2;
-	std::shared_ptr<Framebuffer> fb;
-
 	SandboxApp() : Application(ApplicationSpec{ WindowDesc{"SandboxApp", 800,800}}) {
 	}
 	virtual ~SandboxApp() {
@@ -214,34 +93,16 @@ public:
 #ifdef USE_IMGUI
 		ImGuiLayer::Init();
 #endif
-		float vertices[3*3] = { -0.5f, -0.5f,0.0f, // Vertex 0 (x, y)
-							    0.5f, -0.5f,0.0f, // Vertex 1 (x, y)
-							    0.0f,  0.5f,0.0f };
-		uint32_t indices[3] = { 0,1,2 };
-
 		Mesh m(
 			{
-				Vertex(glm::vec3(1,1,1)),
-				Vertex(glm::vec3(2,1,1)),
-				Vertex(glm::vec3(3,1,1)),
-				Vertex(glm::vec3(4,1,1)),
-				Vertex(glm::vec3(5,1,1)),
+				Vertex(glm::vec3(-0.5,-0.5, 0.0)),
+				Vertex(glm::vec3( 0.5,-0.5, 0.0)),
+				Vertex(glm::vec3( 0.0, 0.5, 0.0)),
 			}, 
-			{}
+			{
+				0,1,2
+			}
 			);
-		auto data = m.FindBoundingBox();
-
-		static auto va = VertexArray::Create();
-		static auto vb = VertexBuffer::Create({ {"mPos", ShaderDataType::Float3} }, vertices, sizeof(float) * 9);
-		static auto ib = IndexBuffer::Create(indices, 3);
-
-		va->SetIndexBuffer(ib);
-		va->AddVertexBuffer(vb);
-
-
-		static auto renderPass = RenderPass::Create({ {FramebufferTexFormat::RGB8, StoreLoadOp::CLEAR, StoreLoadOp::LOAD} }, { Subpass(0, std::vector<uint32_t>(), { 0 }, std::vector<uint32_t>()) });
-		fb = Framebuffer::Create(800, 800, { FramebufferTexFormat::RGB8 }, renderPass);
-
 		static auto shader = Shader::Create(
 			R"(
 				layout(location = 0) in vec3 aPos;
@@ -269,20 +130,11 @@ public:
 			{});
 		static auto mat = Material::Create(shader);
 		auto ubo = mat->GetUbo("ubo");
-
-		static auto pipeline = GraphicsPipeline::Create(vb->GetLayout(),mat, fb);
 		bool ok = ubo->Set("yellow", 1);
 
-		cmd = CommandBuffer::Create();
-		
-		cmd->BindRenderPass(renderPass, fb, glm::vec4(1,0.5,0.5,1));
-		cmd->BindGraphicsPipeline(pipeline);
-		cmd->BindVertexArray(va);
-		cmd->Draw(3);
-		cmd->Execute();
+		Graphics::GetRendererPipeline()->UploadMesh(m, mat);
 	}
 	void OnRender() {
-		((RendererPipeline1*)Graphics::GetRendererPipeline())->cmd->BlitFramebuffers(fb, RendererApi::Get()->GetFramebuffer());
 		// Draw Gui
 #ifdef USE_IMGUI
 		{

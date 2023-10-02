@@ -69,6 +69,24 @@ namespace RoxEngine {
 		mOperations.emplace_back(op);
 		mChanged = true;
 	}
+	void CommandBuffer::UnbindRenderPass()
+	{
+		Operation op = { mOperations.size(), Operation::UNBIND_RENDER_PASS, 1 };
+		mOperations.emplace_back(op);
+		mChanged = true;
+	}
+	void CommandBuffer::UnbindGraphicsPipeline()
+	{
+		Operation op = { mOperations.size(), Operation::UNBIND_GRAPHICS_PIPELINE, 1 };
+		mOperations.emplace_back(op);
+		mChanged = true;
+	}
+	void CommandBuffer::UnbindVertexArray()
+	{
+		Operation op = { mOperations.size(), Operation::UNBIND_VERTEX_ARRAY, 1};
+		mOperations.emplace_back(op);
+		mChanged = true;
+	}
 	bool CommandBuffer::HasChanged()
 	{
 		return mChanged;

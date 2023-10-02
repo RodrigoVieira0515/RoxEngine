@@ -20,6 +20,10 @@ namespace RoxEngine {
 				BIND_GRAPHICS_PIPELINE,
 				BIND_VERTEX_ARRAY,
 
+				UNBIND_RENDER_PASS,
+				UNBIND_GRAPHICS_PIPELINE,
+				UNBIND_VERTEX_ARRAY,
+
 				CALL_CMD,
 				INLINE_CMD,
 
@@ -63,7 +67,7 @@ namespace RoxEngine {
 			uint32_t index = 0; // index of the this operation
 			Type type = Type::NONE;
 			
-			std::variant<opBindRp, opBindGp, opBindVa, opDraw, opCICmd, opBlitFb, opRawCall> data;
+			std::variant<opBindRp, opBindGp, opBindVa, opDraw, opCICmd, opBlitFb, opRawCall, int> data;
 		};
 
 
@@ -78,6 +82,10 @@ namespace RoxEngine {
 		void CallCmd(std::shared_ptr<CommandBuffer> cmd);
 		void InlineCmd(std::shared_ptr<CommandBuffer> cmd);
 		void RawCall(std::function<void(CommandBuffer*,void*)> fn);
+		void UnbindRenderPass();
+		void UnbindGraphicsPipeline();
+		void UnbindVertexArray();
+
 		// creates the raw objs without executing
 		bool HasChanged();
 		virtual void CreateCache() = 0;
