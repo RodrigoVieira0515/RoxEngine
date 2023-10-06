@@ -30,7 +30,7 @@ public:
 	std::shared_ptr<Material> Mat;
 	std::shared_ptr<Framebuffer> fb;
 	std::shared_ptr<GraphicsPipeline> pipeline;
-		 
+
 	std::shared_ptr<VertexArray> va;
 	BufferLayout bufferLayout;
 
@@ -96,7 +96,7 @@ public:
 class SandboxApp : public Application
 {
 public:
-	SandboxApp() : Application(ApplicationSpec{ WindowDesc{"SandboxApp", 800,800}}) {
+	SandboxApp() : Application(ApplicationSpec{ WindowDesc{"SandboxApp", 800,800} }) {
 	}
 	virtual ~SandboxApp() {
 
@@ -108,9 +108,9 @@ public:
 		Mesh m(
 			{
 				Vertex(glm::vec3(-0.5,-0.5, 0.0)),
-				Vertex(glm::vec3( 0.5,-0.5, 0.0)),
-				Vertex(glm::vec3( 0.0, 0.5, 0.0)),
-			}, 
+				Vertex(glm::vec3(0.5,-0.5, 0.0)),
+				Vertex(glm::vec3(0.0, 0.5, 0.0)),
+			},
 			{
 				0,1,2
 			}
@@ -122,7 +122,7 @@ public:
 				void main() {
 					gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
 				}
-			)", 
+			)",
 			R"(
 				layout(location = 0) out vec4 FragColor;
 
@@ -138,7 +138,7 @@ public:
 						FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
 					}
 				}
-			)", 
+			)",
 			{});
 		static auto mat = Material::Create(shader);
 		auto ubo = mat->GetUbo("ubo");

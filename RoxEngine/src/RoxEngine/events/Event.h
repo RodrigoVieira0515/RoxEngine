@@ -137,7 +137,7 @@ public:
 class KeyEvent : public Event
 {
 public:
-	KeyCode GetKeyCode() {}
+	KeyCode GetKeyCode() { return mKeyCode; }
 
 	EVENT_CLASS_CATEGORY((uint32_t)EventCategory::Keyboard | (uint32_t)EventCategory::Input);
 

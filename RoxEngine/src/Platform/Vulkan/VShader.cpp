@@ -83,6 +83,7 @@ namespace RoxEngine::Vulkan
 		compiler_options.SetGenerateDebugInfo();
 		compiler_options.SetOptimizationLevel(shaderc_optimization_level_zero);
 		compiler_options.SetPreserveBindings(true);
+		compiler_options.SetAutoMapLocations(true);
 
 		shaderc::Compiler compiler;
 		auto vertexShader = compiler.CompileGlslToSpv(vertexSrc, shaderc_vertex_shader, "-", compiler_options);
@@ -164,6 +165,43 @@ namespace RoxEngine::Vulkan
 					case spirv_cross::SPIRType::Double:  member_t = UniformBuffer::UboDesc::Type::Double;  break;
 					case spirv_cross::SPIRType::Struct:  member_t = UniformBuffer::UboDesc::Type::Struct;  break;
 					default: RE_CORE_INFO("Unsupported shader data type for reflection"); break;
+					}
+					if (member_type.columns == 0 && member_type.vecsize > 1) {
+						if (member_type.vecsize == 2) {
+							switch (member_type.basetype)
+							{
+							case spirv_cross::SPIRType::Int:     member_t = UniformBuffer::UboDesc::Type::iVec2;     break;
+							case spirv_cross::SPIRType::UInt:    member_t = UniformBuffer::UboDesc::Type::uVec2;    break;
+							case spirv_cross::SPIRType::Boolean: member_t = UniformBuffer::UboDesc::Type::bVec2; break;
+							case spirv_cross::SPIRType::Float:   member_t = UniformBuffer::UboDesc::Type::Vec2;   break;
+							}
+						}
+						if (member_type.vecsize == 3) {
+							switch (member_type.basetype)
+							{
+							case spirv_cross::SPIRType::Int:     member_t = UniformBuffer::UboDesc::Type::iVec3;     break;
+							case spirv_cross::SPIRType::UInt:    member_t = UniformBuffer::UboDesc::Type::uVec3;    break;
+							case spirv_cross::SPIRType::Boolean: member_t = UniformBuffer::UboDesc::Type::bVec3; break;
+							case spirv_cross::SPIRType::Float:   member_t = UniformBuffer::UboDesc::Type::Vec3;   break;
+							}
+						}
+						if (member_type.vecsize == 4) {
+							switch (member_type.basetype)
+							{
+							case spirv_cross::SPIRType::Int:     member_t = UniformBuffer::UboDesc::Type::iVec4;     break;
+							case spirv_cross::SPIRType::UInt:    member_t = UniformBuffer::UboDesc::Type::uVec4;    break;
+							case spirv_cross::SPIRType::Boolean: member_t = UniformBuffer::UboDesc::Type::bVec4; break;
+							case spirv_cross::SPIRType::Float:   member_t = UniformBuffer::UboDesc::Type::Vec4;   break;
+							}
+						}
+					}
+					else {
+						if (member_type.columns == 4) {
+							member_t = UniformBuffer::UboDesc::Type::Mat4;
+						}
+						if (member_type.columns == 3) {
+							member_t = UniformBuffer::UboDesc::Type::Mat3;
+						}
 					}
 					uboDesc.mFields.insert({ type.dir.size() != 0 ? (type.dir + "." + member_name) : member_name,{member_offset,member_t} });
 				}

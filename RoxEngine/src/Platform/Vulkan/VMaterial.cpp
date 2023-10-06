@@ -20,7 +20,10 @@ namespace RoxEngine::Vulkan
 
 	std::shared_ptr<RoxEngine::UniformBuffer> Material::GetUbo(const std::string& name)
 	{
-		return mUbos.at(name);
+		auto it = mUbos.find(name);
+		if (it != mUbos.end())
+			return it->second;
+		return nullptr;
 	}
 
 }

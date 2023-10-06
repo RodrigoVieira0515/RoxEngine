@@ -1,3 +1,7 @@
-[14:26:57] [critical] ROXENGINE: TODO: implement VertexBuffer staging buffer
-[14:26:59] [error] ROXENGINE: Todo: Uniform buffer staging buffer
-[14:26:59] [critical] ROXENGINE: TODO: ADD A PROPER WAY TO UPDATE DESCRIPTOR AKA UBOs
+[13:36:23] [info] ROXENGINE: Using NVIDIA GeForce GTX 1050 Ti device to initialize vulkan
+[13:36:23] [info] ROXENGINE: Vertex(glm::vec3(-0.25,-0.25,-1.002002)),
+[13:36:23] [info] ROXENGINE: Vertex(glm::vec3(0.25,-0.25,-1.002002)),
+[13:36:23] [info] ROXENGINE: Vertex(glm::vec3(0,0.25,-1.002002)),
+[13:36:24] [error] ROXENGINE: Todo: Uniform buffer staging buffer
+[13:36:24] [critical] ROXENGINE: TODO: implement VertexBuffer staging buffer
+[13:36:25] [critical] ROXENGINE: TODO: ADD A PROPER WAY TO UPDATE DESCRIPTOR AKA UBOs

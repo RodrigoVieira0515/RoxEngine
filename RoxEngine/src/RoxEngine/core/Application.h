@@ -15,7 +15,7 @@ namespace RoxEngine {
 		Application(const ApplicationSpec& spec);
 		virtual ~Application();
 
-	private:
+	protected:
 		friend int ::main(int argc, char** argv);
 		virtual void OnInit() = 0;
 		virtual void OnRender() = 0;
@@ -23,7 +23,7 @@ namespace RoxEngine {
 		virtual void OnEvent(Event& event) = 0;
 
 		std::shared_ptr<Window> mMainWindow;
-	protected:
+	private:
 		void Run();
 	};
 }
