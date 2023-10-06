@@ -9,6 +9,10 @@ namespace RoxEngine {
 	Application::Application(const ApplicationSpec& spec)
 	{
 		mMainWindow = Window::Create(spec.windowdesc);
+		mMainWindow->SetEventCallback([&](Event& e) {
+			EventDispatcher dispatcher(e);
+			OnEvent(e);
+		});
 	}
 	Application::~Application()
 	{

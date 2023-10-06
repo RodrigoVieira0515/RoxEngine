@@ -1,4 +1,6 @@
 #pragma once
+#include <unordered_map>
+#include <functional>
 
 namespace RoxEngine {
 	// Meant for dynamic metadata not static, like information on a mesh from a custom renderer pipeline
@@ -38,7 +40,6 @@ namespace RoxEngine {
 			delete Get<T>();
 			mData.erase(typeid(T).name());
 		}
-
 	private:
 		struct Data {
 			void* ptr;

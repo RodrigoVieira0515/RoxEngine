@@ -1,5 +1,6 @@
 #pragma once
 #include <RoxEngine/core/Window.h>
+#include <RoxEngine/events/Event.h>
 
 int main(int argc, char** argv);
 
@@ -19,7 +20,8 @@ namespace RoxEngine {
 		virtual void OnInit() = 0;
 		virtual void OnRender() = 0;
 		virtual void OnShutdown() = 0;
-	
+		virtual void OnEvent(Event& event) = 0;
+
 		std::shared_ptr<Window> mMainWindow;
 	protected:
 		void Run();

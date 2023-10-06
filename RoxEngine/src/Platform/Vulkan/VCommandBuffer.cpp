@@ -38,7 +38,12 @@ namespace RoxEngine::Vulkan {
 			currentBound.bGraphicsPipeline = vPipeline;
 			currentBound.bMaterial = std::dynamic_pointer_cast<Material>(vPipeline->mMat);
 
-			RE_CORE_FATAL("TODO: ADD A PROPER WAY TO UPDATE DESCRIPTOR AKA UBOs");
+			static bool warned = false;
+
+			if (!warned) {
+				RE_CORE_FATAL("TODO: ADD A PROPER WAY TO UPDATE DESCRIPTOR AKA UBOs");
+				warned = true;
+			}
 			if (vPipeline->mMat->GetShader()->GetNumOfUbos() > 0)
 			{
 				auto api = (RendererApi*)RendererApi::Get().get();

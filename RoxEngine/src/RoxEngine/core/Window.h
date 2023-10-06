@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
-#include "Window.h"
+#include <functional>
+#include <RoxEngine/events/Event.h>
 
 namespace RoxEngine {
 	struct WindowDesc {
@@ -11,6 +12,8 @@ namespace RoxEngine {
 	class Window
 	{
 	public:
+		using EventCallbackFn = std::function<void(Event&)>;
+
 		virtual ~Window() = default;
 
 		virtual void* GetNativeWindow() = 0;
@@ -18,6 +21,7 @@ namespace RoxEngine {
 		virtual void PollEvents() = 0;
 		virtual WindowDesc GetDesc() = 0;
 		virtual std::array<uint32_t, 2> GetSize() = 0;
+		virtual void SetEventCallback(EventCallbackFn fn) = 0;
 
 		static std::shared_ptr<Window> Create(const WindowDesc& desc);
 	};

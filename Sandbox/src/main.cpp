@@ -13,8 +13,16 @@
 #include <iostream>
 #include <chrono>
 #include <glm/gtx/string_cast.hpp>
+
 using namespace RoxEngine;
 
+/*
+	1º. pass: Organizes the meshes into octree // executed every uploadMesh() or similar
+	2º. pass: Sees what visible for X camera
+	3º. pass: Organizes the meshes info for batch rendering and/or instancing (For X camera)
+	4º. pass: Renders to X camera
+	5º. pass: Go back to step 3 if is needed to render to more than 1 Camera
+*/
 class RendererPipeline1 : public RendererPipeline
 {
 public:
@@ -53,6 +61,10 @@ public:
 		vertices.insert(vertices.end(), mvertices.begin(), mvertices.end());
 		indices.insert(indices.end(), mindices.begin(), mindices.end());
 
+		// radius
+		auto boundingBoxR = m.FindBoundingBox();
+		// no transform yet
+		glm::vec3 position = { 0,0,0 };
 		updated = true;
 	}
 	std::shared_ptr<CommandBuffer> GetCmd() override {
@@ -178,6 +190,9 @@ public:
 		ImGui::Begin("Hello World");
 		ImGui::End();
 #endif
+	}
+	void OnEvent(Event& event) {
+		RE_CORE_INFO("{}", event.ToString());
 	}
 	void OnShutdown() {
 	}

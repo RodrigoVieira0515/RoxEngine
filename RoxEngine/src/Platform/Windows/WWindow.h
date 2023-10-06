@@ -15,9 +15,17 @@ namespace RoxEngine::Windows {
 		void* GetNativeWindow() override;
 		WindowDesc GetDesc() override;
 		std::array<uint32_t, 2> GetSize() override;
+		void SetEventCallback(EventCallbackFn fn) override;
 
 		std::shared_ptr<RoxEngine::RendererApi> mRendererApi;
 		GLFWwindow* mWindow;
-		WindowDesc mDesc;
+		struct WindowData {
+			Window* window;
+			EventCallbackFn eventCallback;
+			uint32_t width;
+			uint32_t height;
+			WindowDesc desc;
+		};
+		WindowData mData;
 	};
 }

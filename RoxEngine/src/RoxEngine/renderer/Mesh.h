@@ -1,5 +1,10 @@
 #pragma once
 #include <RoxEngine/core/Metadata.h>
+#include <RoxEngine/core/Assert.h>
+#include <glm/glm.hpp>
+#include <vector>
+#include <thread>
+#include <functional>
 
 namespace RoxEngine {
 	struct Vertex {
@@ -12,6 +17,13 @@ namespace RoxEngine {
 		glm::vec3 position;
 		glm::vec2 uv = { 0,0 };
 		glm::vec3 normal = { 0,0,0 };
+
+		bool operator==(const Vertex& v) const {
+			return position == v.position && uv == v.uv && normal == v.normal;
+		}
+		bool operator!=(const Vertex& v) const{
+			return position != v.position || uv != v.uv || normal != v.normal;
+		}
 	};
 
 	class Mesh {
@@ -45,11 +57,11 @@ namespace RoxEngine {
 			return mIndices;
 		}
 		// Returns the radius of the bounding box starting from the center
-		glm::vec3 FindBoundingBox()
+		glm::vec3 FindBoundingBox() const
 		{
 			auto threads_count = std::thread::hardware_concurrency();
 
-			std::function findboudbox_fn = [](std::vector<Vertex>& vertices, size_t startIndex, size_t endIndex, glm::vec3& data) {
+			std::function<void(const std::vector<Vertex>&, size_t, size_t, glm::vec3&)> findboudbox_fn = [](const std::vector<Vertex>& vertices, size_t startIndex, size_t endIndex, glm::vec3& data) {
 				data = { 0,0,0 };
 				for (int i = startIndex; i < endIndex; i++) {
 					if (vertices[i].position.x > data.x)
@@ -63,8 +75,8 @@ namespace RoxEngine {
 
 			// this atleast gotta be larger than threads_count
 			if (mVertices.size() < 500 && mVertices.size() > threads_count) {
-				glm::vec3 data;
-				findboudbox_fn(mVertices, 0, mVertices.size(), data);
+				glm::vec3 data = { 0,0,0 };
+				findboudbox_fn(std::ref(mVertices), 0, mVertices.size(), std::ref(data));
 				return data / 2.f;
 			}
 			std::vector<std::thread> threads;
@@ -113,10 +125,40 @@ namespace RoxEngine {
 			return finalData / 2.f;
 		}
 
+		Mesh& operator=(const Mesh& m) {
+			mVertices = m.mVertices;
+			mIndices = m.mIndices;
+			type = m.type;
+			metadata = m.metadata;
+			return *this;
+		}
+
+		bool operator==(const Mesh& m) const{
+			if (type != m.type || mVertices.size() != m.mVertices.size() || mIndices.size() == m.mIndices.size())
+				return false;
+			for(int i = 0; i < mVertices.size(); i++)
+			{
+				if (mVertices[i] != m.mVertices[i])
+					return false;
+			}
+			for (int i = 0; i < mIndices.size(); i++)
+			{
+				if (mIndices[i] != m.mIndices[i])
+					return false;
+			}
+			return true;
+		}
+		bool operator!=(const Mesh& m) const
+		{
+			bool equal = *this == m;
+			return !equal;
+		}
+
+		Type GetType() { return type; }
 
 		Metadata metadata;
-		const Type type;
 	private:
+		Type type;
 		std::vector<Vertex> mVertices;
 		std::vector<uint32_t> mIndices;
 	};

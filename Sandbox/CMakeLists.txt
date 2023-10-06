@@ -5,3 +5,4 @@ file(GLOB_RECURSE sandboxsrc
 
 add_executable(Sandbox ${sandboxsrc})
 target_link_libraries(Sandbox RoxEngine)
+target_include_directories(Sandbox PRIVATE "../third_party/include")
