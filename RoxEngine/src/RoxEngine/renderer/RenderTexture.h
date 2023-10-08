@@ -14,6 +14,10 @@ namespace RoxEngine {
 		RG32,
 		RGB32,
 		RGBA32,
+
+		D32F,
+		D32FS8U,
+		D24UNS8U,
 	};
 	class RenderTexture
 	{

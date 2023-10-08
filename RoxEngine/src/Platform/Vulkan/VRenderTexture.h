@@ -5,7 +5,8 @@
 #include <vma-hpp/vk_mem_alloc.hpp>
 
 namespace RoxEngine::Vulkan {
-	vk::Format formatToVk(const FramebufferTexFormat& f, vk::PhysicalDevice& device);
+	// format isLinearTilling isDepthStencil
+	std::tuple<vk::Format, bool, bool> formatToVk(const FramebufferTexFormat& f, vk::PhysicalDevice& device);
 	FramebufferTexFormat vkToFormat(vk::Format format);
 
 	class RenderTexture : public RoxEngine::RenderTexture

@@ -41,8 +41,8 @@ public:
 
 	RendererPipeline1() {
 		cmd = CommandBuffer::Create();
-		auto renderPass = RenderPass::Create({ {FramebufferTexFormat::RGB8, StoreLoadOp::CLEAR, StoreLoadOp::LOAD} }, { Subpass(0, std::vector<uint32_t>(), { 0 }, std::vector<uint32_t>()) });
-		fb = Framebuffer::Create(800, 800, { FramebufferTexFormat::RGB8 }, renderPass);
+		auto renderPass = RenderPass::Create({ {FramebufferTexFormat::RGB8, StoreLoadOp::CLEAR, StoreLoadOp::LOAD}, {FramebufferTexFormat::D32FS8U, StoreLoadOp::CLEAR, StoreLoadOp::LOAD}}, {Subpass(0, std::vector<uint32_t>(), {0}, std::vector<uint32_t>())});
+		fb = Framebuffer::Create(800, 800, { FramebufferTexFormat::RGB8, FramebufferTexFormat::D32FS8U }, renderPass);
 		bufferLayout = { {"mPos", ShaderDataType::Float3},{"mUv", ShaderDataType::Float2},{"mNormal", ShaderDataType::Float3} };
 	}
 

@@ -9,34 +9,45 @@
 #include <vulkan/vulkan.h>
 
 namespace RoxEngine::Vulkan {
-	vk::Format formatToVk(const FramebufferTexFormat& f, vk::PhysicalDevice& device) {
-		static std::unordered_map<FramebufferTexFormat, vk::Format> formatToVk;
+	std::tuple<vk::Format,bool, bool> formatToVk(const FramebufferTexFormat& f, vk::PhysicalDevice& device) {
+		static std::unordered_map<FramebufferTexFormat, std::tuple<vk::Format,bool,bool>> formatToVk;
 		auto it = formatToVk.find(f);
 		if (it != formatToVk.end())
 			return it->second;
-
+		bool isDepth = false;
 		vk::Format preFormat;
-		
+		vk::FormatFeatureFlags formatFeatures;
+
 		switch (f)
 		{
 		case FramebufferTexFormat::R8:
-			preFormat = vk::Format::eR8Unorm; break;
+			preFormat = vk::Format::eR8Unorm; formatFeatures = vk::FormatFeatureFlagBits::eColorAttachment; break;
 		case FramebufferTexFormat::RG8:
-			preFormat = vk::Format::eR8G8Unorm; break;
+			preFormat = vk::Format::eR8G8Unorm; formatFeatures = vk::FormatFeatureFlagBits::eColorAttachment; break;
 		case FramebufferTexFormat::RGB8:
-			preFormat = vk::Format::eR8G8B8Unorm; break;
+			preFormat = vk::Format::eR8G8B8Unorm; formatFeatures = vk::FormatFeatureFlagBits::eColorAttachment; break;
 		case FramebufferTexFormat::RGBA8:
-			preFormat = vk::Format::eR8G8B8A8Unorm; break;
+			preFormat = vk::Format::eR8G8B8A8Unorm; formatFeatures = vk::FormatFeatureFlagBits::eColorAttachment; break;
+
+		case FramebufferTexFormat::D32F:
+			isDepth = true;
+			preFormat = vk::Format::eD32Sfloat; formatFeatures = vk::FormatFeatureFlagBits::eDepthStencilAttachment; break;
+		case FramebufferTexFormat::D32FS8U:
+			isDepth = true;
+			preFormat = vk::Format::eD32SfloatS8Uint; formatFeatures = vk::FormatFeatureFlagBits::eDepthStencilAttachment; break;
+		case FramebufferTexFormat::D24UNS8U:
+			isDepth = true;
+			preFormat = vk::Format::eD32SfloatS8Uint; formatFeatures = vk::FormatFeatureFlagBits::eDepthStencilAttachment; break;
 		default:
 			assert(false);
 		}
 		auto formatProps = device.getFormatProperties(preFormat);
-		bool linearTilingSupported = (formatProps.linearTilingFeatures & vk::FormatFeatureFlagBits::eColorAttachment) && (formatProps.linearTilingFeatures & vk::FormatFeatureFlagBits::eTransferSrc) && (formatProps.linearTilingFeatures & vk::FormatFeatureFlagBits::eTransferDst);
-		bool optimalTilingSupported = (formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eColorAttachment) && (formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eTransferSrc) && (formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eTransferDst);
+		bool linearTilingSupported = (formatProps.linearTilingFeatures & formatFeatures) && (formatProps.linearTilingFeatures & vk::FormatFeatureFlagBits::eTransferSrc) && (formatProps.linearTilingFeatures & vk::FormatFeatureFlagBits::eTransferDst);
+		bool optimalTilingSupported = (formatProps.optimalTilingFeatures & formatFeatures) && (formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eTransferSrc) && (formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eTransferDst);
 		bool supported = linearTilingSupported || optimalTilingSupported;
 		if (supported) {
-			formatToVk.insert({ f,preFormat });
-			return preFormat;
+			formatToVk.insert({ f,{ preFormat, linearTilingSupported, isDepth} });
+			return { preFormat, linearTilingSupported, isDepth};
 		}
 		vk::Format afterFormat = vk::Format::eUndefined;
 
@@ -50,7 +61,8 @@ namespace RoxEngine::Vulkan {
 			afterFormat = vk::Format::eR8G8B8A8Unorm; break;
 		case FramebufferTexFormat::RGBA8:
 			//TODO: maybe increese precision?
-			RE_CORE_ASSERT(false, "Format is not supported, {}", "");
+		default:
+			RE_CORE_ASSERT(false, "Format is not supported, RGBA8");
 			break;
 		}
 		formatProps = device.getFormatProperties(afterFormat);
@@ -60,17 +72,20 @@ namespace RoxEngine::Vulkan {
 		supported = linearTilingSupported || optimalTilingSupported;
 
 		RE_CORE_ASSERT(supported, "Format is not supported");
-		formatToVk.insert({ f,afterFormat });
-		return afterFormat;
+		formatToVk.insert({ f,{ afterFormat, linearTilingSupported, isDepth} });
+		return { afterFormat,linearTilingSupported, isDepth};
 	}
 	FramebufferTexFormat vkToFormat(vk::Format format)
 	{
 		switch (format)
 		{
-		case vk::Format::eR8Unorm: return FramebufferTexFormat::R8; break;
-		case vk::Format::eR8G8Unorm: return FramebufferTexFormat::RG8; break;
-		case vk::Format::eR8G8B8Unorm: return FramebufferTexFormat::RGB8; break;
-		case vk::Format::eR8G8B8A8Unorm: return FramebufferTexFormat::RGBA8; break;
+		case vk::Format::eR8Unorm: return FramebufferTexFormat::R8;
+		case vk::Format::eR8G8Unorm: return FramebufferTexFormat::RG8;
+		case vk::Format::eR8G8B8Unorm: return FramebufferTexFormat::RGB8;
+		case vk::Format::eR8G8B8A8Unorm: return FramebufferTexFormat::RGBA8;
+		case vk::Format::eD32Sfloat: return FramebufferTexFormat::D32F;
+		case vk::Format::eD32SfloatS8Uint: return FramebufferTexFormat::D32FS8U;
+		case vk::Format::eD24UnormS8Uint: return FramebufferTexFormat::D24UNS8U;
 		default:
 			assert(false);
 		}
@@ -80,12 +95,15 @@ namespace RoxEngine::Vulkan {
 		mFormat = colorFormat;
 		auto api = (RendererApi*)(RendererApi::Get().get());
 
-		auto internalFormat = formatToVk(colorFormat, api->mPhysicalDevice);
+		vk::Format internalFormat;
+		bool isLinear;
+		bool isDepth;
+
+		std::tie(internalFormat, isLinear, isDepth) = formatToVk(colorFormat, api->mPhysicalDevice);
 
 		mFormat = colorFormat;
 		mInternalFormat = vkToFormat(internalFormat);
 		auto formatProps = api->mPhysicalDevice.getFormatProperties(internalFormat);
-		auto tilingOption = formatProps.optimalTilingFeatures & vk::FormatFeatureFlagBits::eColorAttachment ? vk::ImageTiling::eOptimal : vk::ImageTiling::eLinear;
 
 		vk::ImageCreateInfo info({},
 			vk::ImageType::e2D, 
@@ -93,37 +111,14 @@ namespace RoxEngine::Vulkan {
 			vk::Extent3D(width, height, 1), 
 			1, 1,
 			vk::SampleCountFlagBits::e1, 
-			tilingOption, 
-			vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst,
+			isLinear ? vk::ImageTiling::eLinear : vk::ImageTiling::eOptimal,
+			(isDepth ? vk::ImageUsageFlagBits::eDepthStencilAttachment : vk::ImageUsageFlagBits::eColorAttachment) | vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst,
 			vk::SharingMode::eExclusive);
 		info.setInitialLayout(vk::ImageLayout::eUndefined);
 		
 		vma::AllocationCreateInfo allocInfo;
 		
 		std::tie(mImage, mAllocation) = api->mAllocator.createImage(info, allocInfo);
-
-		{
-			vk::CommandBufferAllocateInfo cmdAllocInfo(api->mCommandPool, vk::CommandBufferLevel::ePrimary, 1);
-			auto cmd = api->mDevice.allocateCommandBuffers(cmdAllocInfo).front();
-			cmd.begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit));
-			
-			vk::ImageMemoryBarrier barrierSrcToTransfer(
-				vk::AccessFlags(),
-				vk::AccessFlagBits::eColorAttachmentWrite,
-				vk::ImageLayout::eUndefined,
-				vk::ImageLayout::eColorAttachmentOptimal,
-				VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
-				mImage,
-				vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
-
-			cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eColorAttachmentOutput, vk::DependencyFlags(), nullptr, nullptr, barrierSrcToTransfer);
-
-			cmd.end();
-
-			vk::SubmitInfo submit_info(nullptr, nullptr, cmd, nullptr);
-			api->mGraphicsQueue.submit(submit_info, nullptr);
-			api->mDevice.waitIdle();
-		}
 	}
 	RenderTexture::~RenderTexture()
 	{

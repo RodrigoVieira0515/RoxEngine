@@ -13,16 +13,18 @@ namespace RoxEngine::Vulkan {
 
 		std::vector<vk::AttachmentDescription> attachmentsDescriptions;
 		for (auto& att : attachments) {
+			auto attdesc = formatToVk(att.format, api->mPhysicalDevice);
+
 			vk::AttachmentDescription desc(
 				vk::AttachmentDescriptionFlags(),
-				formatToVk(att.format, api->mPhysicalDevice),
+				std::get<0>(attdesc),
 				vk::SampleCountFlagBits::e1,
 				att.loadop == StoreLoadOp::CLEAR ? vk::AttachmentLoadOp::eClear : vk::AttachmentLoadOp::eLoad,
 				att.storeop == StoreLoadOp::CLEAR ? vk::AttachmentStoreOp::eDontCare : vk::AttachmentStoreOp::eStore,
 				vk::AttachmentLoadOp::eDontCare,
 				vk::AttachmentStoreOp::eDontCare,
 				vk::ImageLayout::eUndefined,
-				vk::ImageLayout::eColorAttachmentOptimal
+				std::get<2>(attdesc) ? vk::ImageLayout::eDepthStencilAttachmentOptimal :vk::ImageLayout::eColorAttachmentOptimal
 			);
 			attachmentsDescriptions.push_back(desc);
 		}

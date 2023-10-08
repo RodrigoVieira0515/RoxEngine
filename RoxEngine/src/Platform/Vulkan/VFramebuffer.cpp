@@ -24,14 +24,15 @@ namespace RoxEngine::Vulkan
 		{
 			auto tex = RoxEngine::RenderTexture::Create(width, height, att);
 			auto vtex = ((RenderTexture*)tex.get());
+			auto attdesc = formatToVk(vtex->mInternalFormat, api->mPhysicalDevice);
 			vk::ImageViewCreateInfo imageView(
 				{},
 				vtex->mImage,
 				vk::ImageViewType::e2D,
-				formatToVk(vtex->mInternalFormat,api->mPhysicalDevice)
+				std::get<0>(attdesc)
 			);
 
-			imageView.setSubresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+			imageView.setSubresourceRange(vk::ImageSubresourceRange(std::get<2>(attdesc) ? vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil : vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
 
 			mColorAttachmentViews.push_back(api->mDevice.createImageView(imageView));
 			mColorAttachments.push_back(tex);
