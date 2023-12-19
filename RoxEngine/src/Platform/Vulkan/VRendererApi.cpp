@@ -151,7 +151,7 @@ namespace RoxEngine::Vulkan {
 			mPhysicalDevice = pdevice;
 		}
 		vk::PhysicalDeviceProperties deviceProperties = mPhysicalDevice.getProperties();
-		RE_CORE_INFO("Using {} device to initialize vulkan", deviceProperties.deviceName);
+		RE_CORE_INFO("Using {} device to initialize vulkan", deviceProperties.deviceName.data());
 	}
 	void RendererApi::createDevice()
 	{

@@ -2,6 +2,7 @@
 #include <memory>
 #include <vector>
 #include "RenderTexture.h"
+#include <glm/ext/vector_float4.hpp>
 namespace RoxEngine {
 	enum class StoreLoadOp {
 		CLEAR,
@@ -12,6 +13,7 @@ namespace RoxEngine {
 		FramebufferTexFormat format;
 		StoreLoadOp loadop;
 		StoreLoadOp storeop;
+		glm::vec4 clearColor;
 	};
 	struct Subpass
 	{

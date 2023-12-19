@@ -38,7 +38,6 @@ namespace RoxEngine {
 			struct opBindRp {
 				std::shared_ptr<RenderPass> rp;
 				std::shared_ptr<Framebuffer> fb;
-				glm::vec4 clearColor;
 			};
 			struct opBindGp {
 				std::shared_ptr<RoxEngine::GraphicsPipeline> gp;
@@ -74,7 +73,7 @@ namespace RoxEngine {
 		static std::shared_ptr<CommandBuffer> Create();
 		//resets all operations
 		void Reset();
-		void BindRenderPass(std::shared_ptr<RenderPass>& renderPass, std::shared_ptr<Framebuffer>& framebuffer, glm::vec4 clearColor);
+		void BindRenderPass(std::shared_ptr<RenderPass>& renderPass, std::shared_ptr<Framebuffer>& framebuffer);
 		void BindGraphicsPipeline(std::shared_ptr<RoxEngine::GraphicsPipeline>& pipeline);
 		void BindVertexArray(std::shared_ptr<RoxEngine::VertexArray>& va);
 		void Draw(uint32_t count);

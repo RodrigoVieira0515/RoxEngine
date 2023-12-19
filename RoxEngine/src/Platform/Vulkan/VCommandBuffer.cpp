@@ -22,9 +22,17 @@ namespace RoxEngine::Vulkan {
 			auto& data = std::get<Operation::opBindRp>(op.data);
 			auto rawPass = ((RenderPass*)data.rp.get())->mRenderPass;
 			auto rawFb = ((Framebuffer*)data.fb.get())->mFramebuffer;
-			auto VulkanClearColor = vk::ClearValue(vk::ClearColorValue({ data.clearColor.x,data.clearColor.y,data.clearColor.z,data.clearColor.w }));
+			std::vector<vk::ClearValue> clearColors;
+			for (auto& att : data.rp->GetAttachments()) {
+				auto clearColor = vk::ClearValue(vk::ClearColorValue({ att.clearColor.x,att.clearColor.y,att.clearColor.z,att.clearColor.w }));
+				clearColor.depthStencil.depth = 0;
+				clearColor.depthStencil.stencil = 0;
+				clearColors.push_back(clearColor);
+			}
+
 			auto size = data.fb->GetSize();
-			mPrimaryBuffer.beginRenderPass(vk::RenderPassBeginInfo(rawPass, rawFb, vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(size.x, size.y)), VulkanClearColor), vk::SubpassContents::eInline);
+			
+			mPrimaryBuffer.beginRenderPass(vk::RenderPassBeginInfo(rawPass, rawFb, vk::Rect2D(vk::Offset2D(0, 0), vk::Extent2D(size.x, size.y)), clearColors), vk::SubpassContents::eInline);
 
 			currentBound.bFramebuffer = std::dynamic_pointer_cast<Framebuffer>(data.fb);
 			currentBound.bRenderPass = std::dynamic_pointer_cast<RenderPass>(data.rp);

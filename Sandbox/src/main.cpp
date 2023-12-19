@@ -79,7 +79,7 @@ public:
 		}
 		cmd->Reset();
 		if (va) {
-			cmd->BindRenderPass(fb->GetRenderPass(), fb, glm::vec4(1, 0.5, 0.5, 1));
+			cmd->BindRenderPass(fb->GetRenderPass(), fb);
 			cmd->BindGraphicsPipeline(pipeline);
 			cmd->BindVertexArray(va);
 			cmd->Draw(vertices.size());

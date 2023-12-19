@@ -20,9 +20,9 @@ namespace RoxEngine {
 		mChanged = true;
 		mOperations.clear();
 	}
-	void CommandBuffer::BindRenderPass(std::shared_ptr<RenderPass>& renderPass, std::shared_ptr<Framebuffer>& framebuffer, glm::vec4 clearColor)
+	void CommandBuffer::BindRenderPass(std::shared_ptr<RenderPass>& renderPass, std::shared_ptr<Framebuffer>& framebuffer)
 	{
-		Operation op = { mOperations.size(), Operation::BIND_RENDER_PASS, Operation::opBindRp{renderPass, framebuffer, clearColor} };
+		Operation op = { mOperations.size(), Operation::BIND_RENDER_PASS, Operation::opBindRp{renderPass, framebuffer} };
 		mOperations.emplace_back(op);
 		mChanged = true;
 	}
