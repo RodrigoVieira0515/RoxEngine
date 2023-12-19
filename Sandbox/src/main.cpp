@@ -13,6 +13,7 @@
 #include <iostream>
 #include <chrono>
 #include <glm/gtx/string_cast.hpp>
+#include <NZSL/Parser.hpp>
 
 using namespace RoxEngine;
 

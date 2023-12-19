@@ -4,7 +4,6 @@
 // All rights reserved.
 //
 // For the license information refer to format.h.
-
 #ifndef FMT_CORE_H_
 #define FMT_CORE_H_
 
