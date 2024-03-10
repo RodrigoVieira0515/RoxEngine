@@ -14,4 +14,4 @@ file(GLOB_RECURSE roxenginesrc
 
 add_library(roxengine STATIC ${roxenginesrc})
 target_include_directories(roxengine PUBLIC src ${SPDLOG_INCLUDEPATH})
-target_link_libraries(roxengine PUBLIC spdlog)
+target_link_libraries(roxengine PUBLIC spdlog glad)
