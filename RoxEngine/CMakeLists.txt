@@ -12,6 +12,18 @@ file(GLOB_RECURSE roxenginesrc
      "src/*.cpp"
 )
 
+option(ROXENGINE_INCLUDE_OPENGL "Include or not opengl" ON)
+option(ROXENGINE_INCLUDE_GLFW "Include or not glfw" ON)
+
 add_library(roxengine STATIC ${roxenginesrc})
 target_include_directories(roxengine PUBLIC src ${SPDLOG_INCLUDEPATH})
-target_link_libraries(roxengine PUBLIC spdlog glad)
+if(${ROXENGINE_INCLUDE_OPENGL})
+     target_compile_definitions(roxengine PUBLIC ROXENGINE_INCLUDE_OPENGL)
+     target_link_libraries(roxengine PUBLIC glad)
+endif()
+if(${ROXENGINE_INCLUDE_GLFW})
+     target_compile_definitions(roxengine PUBLIC ROXENGINE_INCLUDE_GLFW)
+     target_link_libraries(roxengine PUBLIC glfw)
+endif()
+
+target_link_libraries(roxengine PUBLIC spdlog)

@@ -1,38 +1,23 @@
 #include <iostream>
 #include <RoxEngine/Core/Logger.h>
 #include <RoxEngine/Core/Thread.h>
-#include <thread>
+#include <RoxEngine/Core/Window.h>
+#include <RoxEngine/Renderer/GraphicsContext.h>
 
-void threada() {
-    SetThreadName("Thread A");
-    CORE_TRACE("");
-    CORE_INFO("");
-    CORE_WARN("");
-    CORE_ERROR("");
-    CORE_CRITICAL("");
-}
-void threadb() {
-    SetThreadName("Thread B");
-    TRACE("");
-    INFO("");
-    WARN("");
-    ERROR("");
-    CRITICAL("");
-}
+using namespace RoxEngine;
 
 int main(){
     SetThreadName("GameThread");
-    CORE_TRACE("Hello from core logger");
-    TRACE("Hello from client logger");
+    Window::Desc window_desc;
+    window_desc.title = "RoxEngine - SANDBOX";
+    window_desc.width = 800;
+    window_desc.height = 800;
+    auto window = Window::Create(window_desc);
+    auto context = GraphicsContext::Create(window->GetNative());
+    context->Init();
+    while(window->IsOpen()) {
+        window->PollEvents();
 
-    std::thread a(threada);
-    std::thread b(threadb);
-
-    while(true) {
-        if(a.joinable() && b.joinable()) {
-            break;
-        }
+        context->SwapBuffers();
     }
-    a.join();
-    b.join();
 }
