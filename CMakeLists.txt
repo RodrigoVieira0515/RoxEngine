@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.24)
+project("RoxEngine")
+
+add_subdirectory(RoxEngine)
+add_subdirectory(Sandbox)
