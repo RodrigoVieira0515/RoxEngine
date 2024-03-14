@@ -4,3 +4,21 @@
 [submodule "submodules/glfw"]
 	path = submodules/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "submodules/nzsl"]
+	path = submodules/nzsl
+	url = https://github.com/NazaraEngine/ShaderLang
+[submodule "submodules/fmt"]
+	path = submodules/fmt
+	url = https://github.com/fmtlib/fmt
+[submodule "submodules/frozen"]
+	path = submodules/frozen
+	url = https://github.com/serge-sans-paille/frozen
+[submodule "submodules/fast_float"]
+	path = submodules/fast_float
+	url = https://github.com/fastfloat/fast_float
+[submodule "submodules/ordered_map"]
+	path = submodules/ordered_map
+	url = https://github.com/Tessil/ordered-map
+[submodule "submodules/NazaraUtils"]
+	path = submodules/NazaraUtils
+	url = https://github.com/NazaraEngine/NazaraUtils.git
