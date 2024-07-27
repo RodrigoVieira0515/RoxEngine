@@ -36,7 +36,7 @@ namespace RoxEngine {
 
                 session_desc.targets = targets;
                 session_desc.targetCount = sizeof(slang::TargetDesc) / sizeof(targets);
-
+                session_desc.defaultMatrixLayoutMode = SLANG_MATRIX_LAYOUT_COLUMN_MAJOR;
                 session_desc.fileSystem = new filesystem();
 
                 static constexpr const char* search_paths[] = {

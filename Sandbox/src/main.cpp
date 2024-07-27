@@ -11,7 +11,10 @@
 #include <RoxEngine/scene/Scene.hpp>
 #include "RoxEngine/platforms/GL/GLShader.hpp"
 #include "RoxEngine/renderer/Material.hpp"
+
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 using namespace RoxEngine;
 
 struct TestGame final : public Game {
@@ -68,10 +71,11 @@ struct TestGame final : public Game {
         if(auto ubo = material->GetUbo("Uniforms"))
         {
             glm::vec3 color = { 255.f / 255.f,223.f / 255.f,214.f / 255.f, };
-            glm::mat4 matrix = glm::mat4(1.f);
+            glm::mat4 viewproj = glm::ortho(-2.f,2.f,-2.f,2.f) * glm::inverse(glm::translate(glm::mat4(1.0f),{0.f,0.f,-1.f}));
+            glm::mat4 model = glm::translate(glm::mat4(1.0f), { -1.f,0.f,0.f });
 
             ubo->Set("color", &color.x, sizeof(glm::vec3));
-            ubo->Set("matrix", &matrix[0][0], sizeof(glm::mat4));
+            ubo->Set("matrix", &(viewproj * model)[0][0], sizeof(glm::mat4));
         }
     }
     void Update() override {
